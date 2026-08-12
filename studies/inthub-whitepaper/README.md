@@ -16,6 +16,10 @@ Changes to the ledgers follow the repository's AI protocol — see [AGENTS.md](.
 | [whitepaper-translation.md](whitepaper-translation.md) | the paper restated in the two ledgers' vocabulary: dictionary, ten claims examined, eight claims testable against real Hubs |
 | [paper-vs-implementation-audit.md](paper-vs-implementation-audit.md) | the paper checked against the public OpenTeams repositories, with resolution options |
 
+**Related.** Three audience-specific explainers of the paper — executive, technical, and
+plain-English — were contributed to the paper's own repository:
+[openteams-ai/inthub-whitepaper#1](https://github.com/openteams-ai/inthub-whitepaper/pull/1).
+
 ## Headline findings
 
 - A shipped model, Guard, or Frame is a **specification** — a text determining a *set* of
