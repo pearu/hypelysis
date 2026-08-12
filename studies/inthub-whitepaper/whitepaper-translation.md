@@ -253,7 +253,9 @@ never do.
 
 ## 5. Testable claims
 
-The translation makes the paper falsifiable in specific places. For any real Hub or the
+The translation makes the paper falsifiable in specific places. The
+[audit](paper-vs-implementation-audit.md) reaches the same ground from the code side — its
+§10 states the composability experiment these claims belong with. For any real Hub or the
 reference implementations:
 
 1. **Does the assembly distinguish installed context from typed context?** Under overflow, a

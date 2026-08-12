@@ -10,6 +10,12 @@ and specified nowhere. Most of the concrete ones already exist as code in the `o
 GitHub org. This document puts the two side by side, so that "apply the ideas in practice"
 starts from what is actually built rather than from what the paper asserts.
 
+This audit is one of two instruments pointed at the paper, and they check different things:
+the audit checks it against the **shipping code**; the companion
+[translation](whitepaper-translation.md) checks it against a **theory built from first
+principles** (`definitions.md`, `organisational-definitions.md`). Divergences here are
+labelled DV1–DV11; D-numbers in this study belong to the theory's entries.
+
 Every criticism below is followed by **options for resolving it**, with who would own the
 change and roughly what it costs. Where I have no good suggestion, I say so rather than
 invent one. The options are alternatives to choose between, not a plan — several are
@@ -54,12 +60,12 @@ rewritten as "Where Agents Fit": the paper now *defines* an agent — *"a Cog en
 an Op, given identity and memory by the Hub"* — rather than avoiding the word, and frames the
 whole architecture as employment rather than construction.
 
-**What v9 did not touch.** §2 (Guards, Gates and Tracks unbuilt), D1, D2, D3, D5, D6, D7, D8
-and D9 are unchanged. The accountability plane still has no repository in the org.
+**What v9 did not touch.** §2 (Guards, Gates and Tracks unbuilt), DV1, DV2, DV3, DV5, DV6, DV7, DV8
+and DV9 are unchanged. The accountability plane still has no repository in the org.
 
-**What v9 sharpened.** D4 — the Rosetta table now describes a Cog as packaging "permissions",
+**What v9 sharpened.** DV4 — the Rosetta table now describes a Cog as packaging "permissions",
 restating the paper's side of the disagreement with CogSpec a second time rather than
-softening it. And a new finding, D10, follows directly from what v9 chose to define.
+softening it. And a new finding, DV10, follows directly from what v9 chose to define.
 
 **Sources.** v9 adds entries 32 (Cloudflare OS) and 33 (Earendil Works, session portability);
 both URLs resolve.
@@ -80,13 +86,13 @@ the layer stack and the validation lifecycle, and neither shows any of this.*
 
 | Paper concept | What the paper claims | What exists | Gap |
 |---|---|---|---|
-| **Frame** | Scoped, inheritable, composable, shareable, discoverable, owned. Carries rules, terminology, goals, style, norms, skills, tool specs, prompts, architecture, business process, **and Output Guards**. | `frame-spec` v0.2: Markdown + YAML frontmatter. Required: `type`, `name`, `description`, `visibility`. Recommended: `version`, `scope`, `maintainer`, `inherits`. Ships `tools/validate_frames.py`, an HTML builder, authoring/reader Skills. | **No Guard field.** No provenance. Inheritance non-transitive. See D1–D3. |
-| **Cog** | Encapsulates a model, a context incl. Frames, "the skills, tools, and APIs it has access to", and "its governance parameters: what data it may access, what actions it may take, what requires human approval". Three types: model-heavy / context-heavy / combined. | `cog-spec` v0.1: a directory with `COG.md` (fixed entry file) + a manifest it names. `kind: model \| context \| complete` — **matches the paper's three types**. Strict YAML subset for frontmatter. Conformance fixtures + validator rules. | Manifest format deliberately undefined. Permissions explicitly *excluded*. See D4–D5. |
-| **Op** | Installable, versioned, Frame-oriented, supervised, triggerable, self-contained, composable. Declares a Validation Strategy. | **No Op spec repo.** The shipping catalog (`apollo-capabilities`) calls them **Progs**. The paper's §5.6 YAML manifest sketch is the only concrete Op artifact anywhere. | Whole concept unspecified; name diverged. See D6. |
-| **Guard** | Seven categories. Installable, versioned, shareable. "every Op **should** declare its Guards" (§5.1) — but `GLOSSARY.md` says **must**. | **Nothing.** No repo among 240 searched by name or description. | Total. See §2, D9. |
+| **Frame** | Scoped, inheritable, composable, shareable, discoverable, owned. Carries rules, terminology, goals, style, norms, skills, tool specs, prompts, architecture, business process, **and Output Guards**. | `frame-spec` v0.2: Markdown + YAML frontmatter. Required: `type`, `name`, `description`, `visibility`. Recommended: `version`, `scope`, `maintainer`, `inherits`. Ships `tools/validate_frames.py`, an HTML builder, authoring/reader Skills. | **No Guard field.** No provenance. Inheritance non-transitive. See DV1–DV3. |
+| **Cog** | Encapsulates a model, a context incl. Frames, "the skills, tools, and APIs it has access to", and "its governance parameters: what data it may access, what actions it may take, what requires human approval". Three types: model-heavy / context-heavy / combined. | `cog-spec` v0.1: a directory with `COG.md` (fixed entry file) + a manifest it names. `kind: model \| context \| complete` — **matches the paper's three types**. Strict YAML subset for frontmatter. Conformance fixtures + validator rules. | Manifest format deliberately undefined. Permissions explicitly *excluded*. See DV4–DV5. |
+| **Op** | Installable, versioned, Frame-oriented, supervised, triggerable, self-contained, composable. Declares a Validation Strategy. | **No Op spec repo.** The shipping catalog (`apollo-capabilities`) calls them **Progs**. The paper's §5.6 YAML manifest sketch is the only concrete Op artifact anywhere. | Whole concept unspecified; name diverged. See DV6. |
+| **Guard** | Seven categories. Installable, versioned, shareable. "every Op **should** declare its Guards" (§5.1) — but `GLOSSARY.md` says **must**. | **Nothing.** No repo among 240 searched by name or description. | Total. See §2, DV9. |
 | **Gate** | Decision points; Guards check, Gates decide. Maps to EU AI Act Art. 14. | **Nothing.** CogSpec explicitly excludes "machine-enforced permissions and approvals". | Total. |
 | **Track** | Durable evidence record; retained, not exchanged. Maps to EU AI Act Arts. 12/19. | **Nothing.** CogSpec explicitly excludes "deployment, execution, or run records". | Total. |
-| **Nebi** | Packaging + reproducibility; "defines the common format by which Frames, Cogs, Ops, and Guards can be packaged"; makes the marketplace technically possible. | **Real, and narrower.** `nebari-dev/nebi` — "Server and CLI for managing multi-user Pixi environments"; nebi.nebari.dev: "Environment management for teams". Push/pull workspace specs, version tags, spec diffs, publish to OCI. `nebi-pack` (Keycloak + PostgreSQL), `nb-nebi-kernels`, conda feedstocks. `apollo-capabilities` imports via `nebi import <ref>` then `pixi run launch`, metadata under `[tool.nebi.capability]`. | Paper describes none of the mechanism, and claims an artifact-packaging format that does not exist. See D8. |
+| **Nebi** | Packaging + reproducibility; "defines the common format by which Frames, Cogs, Ops, and Guards can be packaged"; makes the marketplace technically possible. | **Real, and narrower.** `nebari-dev/nebi` — "Server and CLI for managing multi-user Pixi environments"; nebi.nebari.dev: "Environment management for teams". Push/pull workspace specs, version tags, spec diffs, publish to OCI. `nebi-pack` (Keycloak + PostgreSQL), `nb-nebi-kernels`, conda feedstocks. `apollo-capabilities` imports via `nebi import <ref>` then `pixi run launch`, metadata under `[tool.nebi.capability]`. | Paper describes none of the mechanism, and claims an artifact-packaging format that does not exist. See DV8. |
 | **Nebari** | Flagship OSS contribution; modular stack, 15+ packs. | Real, external (`nebari.dev`). | — |
 | **Intelligence Hub** | Per-customer assembly. | By design not a single artifact. `apollo-capabilities` targets are `local` and `hub`. | — |
 | **Organizational Memory** | Persistent context substrate; continuum of implementations. | Not a repo; §3.4 lists ~7 tool families as options. | Concept only, by design. |
@@ -155,7 +161,7 @@ show what they actually need. Record the decision so it is a choice rather than 
 
 Each is checkable against the cited source. These are the feedback-worthy items.
 
-### D1 — The Frame spec cannot express the Frame capability the paper calls critical
+### DV1 — The Frame spec cannot express the Frame capability the paper calls critical
 
 Whitepaper §4.3 gives it a whole heading: *"One of the critical things that Frames can do
 is define a Validation or Verification tool (a Guard) that must be called and pass on the
@@ -170,7 +176,7 @@ authorial intent and generates evidence about whether anyone actually wants the 
 intention, so paper and spec agree. *Owner:* (i)/(ii) a `frame-spec` PR — the repo is
 public; (iii) a paper edit.
 
-### D2 — Frame inheritance is not reproducible, by the spec's own admission
+### DV2 — Frame inheritance is not reproducible, by the spec's own admission
 
 The paper lists among a Hub's characteristics: *"Stores, versions, and manages the
 inheritance graph of organizational Frames"*, and says of inheritance that *"the chain of
@@ -188,7 +194,7 @@ the paper's claim to what v0.2 supports. (iv) Do both (ii) and (iii): honest now
 deterministic later. *Cost:* (ii) is small and, in my view, the highest value-per-line
 change available in the Frame spec today.
 
-### D3 — The marketplace premise collides with the spec's trust posture
+### DV3 — The marketplace premise collides with the spec's trust posture
 
 The paper builds Layer 3 on Frames flowing between organizations, to partners, vendors and
 customers. The spec: *"implementations and users should only load Frames from trusted
@@ -206,7 +212,7 @@ of check the ecosystem can share. (iv) Require Frames to declare a `provenance` 
 (origin, author, signature-when-available) as recommended-not-required in v0.3, so tooling
 can start recording it before verification exists.
 
-### D4 — The paper's Cog carries permissions; CogSpec's Cog explicitly does not
+### DV4 — The paper's Cog carries permissions; CogSpec's Cog explicitly does not
 
 Paper §4.4: a Cog encapsulates *"the skills, tools, and APIs it has access to"* and *"its
 governance parameters: what data it may access, what actions it may take, what requires
@@ -227,7 +233,7 @@ the security story. One paragraph in §4.4. (ii) Leave the paper and add a footn
 governance parameters are Hub-side. (iii) Change the spec to match the paper — I would
 argue against it: a package that grants its own authority is the supply-chain failure mode.
 
-### D5 — "Install once, run anywhere" is not what the Cog spec provides
+### DV5 — "Install once, run anywhere" is not what the Cog spec provides
 
 Paper §4.5: an Op *"can be authored once and deployed into any Intelligence Hub that
 implements the standards needed"*, likened to NPM and pip. The qualifier is there, and it is
@@ -249,7 +255,7 @@ equivalent behaviour across two implementations." Relevant experience: `numpy.di
 a long-running demonstration of what happens when the build/packaging contract is never
 specified, and the wheel is the counterexample.
 
-### D6 — Ops ship as Progs
+### DV6 — Ops ship as Progs
 
 `apollo-capabilities`: *"**Progs** (Programs) are apps, workflows, services, notebooks, and
 other runnable tools."* `MESSAGING.md` instructs the opposite: *"do not improvise new
@@ -269,7 +275,7 @@ really are meant to be one thing. (iii) Rename Ops to Progs in the paper — cos
 `MESSAGING.md` says to reuse the Vendor Fraud Review example everywhere, while cog-spec's
 worked examples are a dependency-risk analyst and a repository-risk analyst.
 
-### D7 — Four marketplace classes; two of them are empty
+### DV7 — Four marketplace classes; two of them are empty
 
 Frames (v0.2 draft), Cogs (v0.1 discussion draft), Ops (nothing), Guards (nothing). And
 `cog-catalog` is explicit that it holds *"decision inputs, not published Cogs"* — 26/24/25
@@ -282,7 +288,7 @@ it in §10 instead, sequencing the four classes explicitly. (iii) Publish one re
 per class, however small, so the table is true as written — the strongest answer, and the
 most work.
 
-### D8 — The paper's Nebi is much larger than the shipping Nebi
+### DV8 — The paper's Nebi is much larger than the shipping Nebi
 
 Paper §3.2 makes Nebi load-bearing for the whole marketplace: it "defines the common format
 by which Frames, Cogs, Ops, and Guards can be packaged for distribution", and with it
@@ -298,20 +304,20 @@ OCI registries. `nebi-pack` adds Keycloak SSO and PostgreSQL; there are conda fe
 An environment manager is not an artifact packaging format. `apollo-capabilities` shows what
 exists today: a capability is a `pixi.toml` carrying a `[tool.nebi.capability]` metadata
 block — a convention layered on Pixi, not a Frame/Cog/Op/Guard format. And cog-spec
-deliberately leaves the Cog manifest undefined (D5), so there is currently no artifact
+deliberately leaves the Cog manifest undefined (DV5), so there is currently no artifact
 format for Nebi to package *to*.
 
 **Options.** (i) Narrow the claim to what Nebi does — environment reproducibility, which is
 real, shipping and valuable. (ii) State the layering explicitly: Pixi resolves, Nebi
 versions and distributes, and an artifact format still has to be defined on top; the paper
 currently reads as though the third layer exists. (iii) If the four artifact classes really
-are to be Nebi-distributed, say which manifest they use — blocked on D5. (iv) Map Nebi onto
+are to be Nebi-distributed, say which manifest they use — blocked on DV5. (iv) Map Nebi onto
 W3's tiers, which is the most precise available statement: Nebi can deliver **tier one**
 (environment) by construction, contributes to **tier two** (artifact) through OCI digests
 and version tags, and cannot address **tier three** (output) at all. That last is what
 Guards are for.
 
-### D9 — The paper and its own glossary disagree on whether Guards are mandatory
+### DV9 — The paper and its own glossary disagree on whether Guards are mandatory
 
 `GLOSSARY.md` declares itself *"the authoritative definition set… Decks, briefs, web copy,
 and future revisions should cite or copy these definitions rather than re-paraphrase them."*
@@ -332,7 +338,7 @@ two deliberately: *must declare*, even if the declaration is "no Guards required
 risk class" — which keeps the contract intact while allowing low-risk Ops to be cheap. That
 third option is how required-but-empty declarations usually work in practice.
 
-### D10 — The paper defines the composite but not the primitive
+### DV10 — The paper defines the composite but not the primitive
 
 v9 defines an **agent** precisely, in both the glossary and §4.2. It does not define a
 **worker** — yet that is the word the definition of a Cog rests on. §4.4 and `GLOSSARY.md`
@@ -360,7 +366,7 @@ examples are `kind: context` — context pointing at a remote model — so the c
 "model plus harness" is never actually shown. (iv) All three; they are cheap and they
 reinforce each other.
 
-### D11 — The boundary crossing that matters most is the one nobody draws
+### DV11 — The boundary crossing that matters most is the one nobody draws
 
 The architecture's central promise is that context stops leaking. §6.1 governs the artifact
 crossings — Frames, Cogs, Ops and Guards exchanged; Tracks retained, with *"anonymized or
@@ -490,7 +496,7 @@ Stated so the reach of everything above is unambiguous.
 
 - The private repos `apollo-desktop`, `cogcloud-*`, and `nebari-frames`, and `cogspec` — the
   OpenTeams manifest profile, distinct from `cog-spec`. `cogspec` matters most: it may
-  already answer D5, in which case D5 reduces to a documentation gap.
+  already answer DV5, in which case DV5 reduces to a documentation gap.
 - Nebari's "more than fifteen software packs" (§3.1). Worth counting before the next
   revision, since the number appears in the paper.
 - The `SOURCES.md` statistics. The register already flags its weaker entries and instructs
@@ -523,7 +529,7 @@ skipped (extractors never ran in production; #124). Make the wrong thing impossi
 
 A Frame is prose that a Cog is supposed to read and honor. This is the strongest available
 argument that prose alone fails silently, and it comes with an issue number. The paper's
-only answer is D1 — the one sentence about Frames declaring Guards, which the spec does not
+only answer is DV1 — the one sentence about Frames declaring Guards, which the spec does not
 implement. `frame-spec`'s own `USING-FRAMES.md` already half-concedes the point: a Frame is
 *"not a substitute for deterministic computation."*
 
@@ -559,7 +565,7 @@ pinning and environment reproducibility are one problem, and a feedstock maintai
 been inside it for years.
 
 **`numpy.distutils` is a different lesson.** It is a build system, not an environment
-manager. Its relevance is as D5's cautionary tale: a build-and-packaging contract that was
+manager. Its relevance is as DV5's cautionary tale: a build-and-packaging contract that was
 never specified, accreted for two decades, and eventually had to be removed in favour of a
 specified one.
 
@@ -645,9 +651,9 @@ semantics actually used (`exact` / `rtol,atol` / `ulp(n)` / `statistical(test, a
 `rubric`); the threshold in force; and a locator for *where* it failed, since a map beat a
 number in practice.
 
-### DD2 — Spec plus reference implementation plus conformance suite (answers D5)
+### DD2 — Spec plus reference implementation plus conformance suite (answers DV5)
 
-D5 says Cogs cannot be portable because the manifest is undefined. Three projects here have
+DV5 says Cogs cannot be portable because the manifest is undefined. Three projects here have
 solved precisely that problem, and all three used the same three-part pattern.
 
 - **StableHLO** — an **8,000-line** normative `spec.md` giving each of **108 operations**
@@ -688,7 +694,7 @@ Gate actually decides things — a governance vocabulary where nothing is ever r
 retired is not a Gate, it is a filing system.
 
 Frame Spec v0.2 has `version` and `visibility` but no status field and no acceptance
-process. Adding a lifecycle would cost one recommended field and would give D2's "chain of
+process. Adding a lifecycle would cost one recommended field and would give DV2's "chain of
 authority" something to actually record.
 
 ### DD4 — Verifiers are Guards, and MLIR makes them declarative (Guard)
@@ -702,7 +708,7 @@ the driver is generic and the checks live with the operations. **59 files under
 definition in ODS rather than writing it as procedural code, on top of the checks that come
 free from traits and interfaces.
 
-That is the strongest available argument for the paper's D1 instinct — that an artifact
+That is the strongest available argument for the paper's DV1 instinct — that an artifact
 should *declare* the checks that apply to it. MLIR shows the shape a Frame or Cog
 declaring its Guards could take, and shows it scales.
 
@@ -769,8 +775,14 @@ Which makes the paper's central claim falsifiable, and the experiment cheap:
   the terms are labels for practices people already had, and the honest move is to say so and
   keep the practices.
 
+The [translation](whitepaper-translation.md) reaches the same ground from the theory side:
+its §5 lists eight claims testable against any real Hub — where the assembly does or does not
+distinguish installed from typed context, whether draws are recorded, which artifact classes
+must have owners. This experiment and that list are one programme; whoever runs either should
+run both.
+
 **Nobody has run it.** There is no Guard to write one against (§2), no verdict record
-defined (W4), no comparison semantics (W1) and no manifest to install into (D5). Until it is
+defined (W4), no comparison semantics (W1) and no manifest to install into (DV5). Until it is
 run, the skeptical reading is the better-supported one, and the paper is best described as a
 proposal awaiting its experiment rather than a description of how things work.
 
@@ -786,26 +798,26 @@ visible. "Paper edit" means a change Travis would make; "spec PR" means `frame-s
 
 | Cost | Change | Owner | From |
 |---|---|---|---|
-| One paragraph | Declare-vs-grant split for Cog permissions | paper edit | D4 |
-| One paragraph | Separate in-trust-boundary sharing from open-registry install | paper edit | D3 |
-| One column | Maturity column on the artifact table | paper edit | D7 |
-| One qualifier | Portability holds within a manifest profile | paper edit | D5 |
-| One paragraph | Narrow Nebi's description to environment management; state the Pixi → Nebi → artifact-format layering | paper edit | D8 |
-| One sentence | Map Nebi onto the reproducibility tiers: delivers tier one, contributes to tier two, cannot address tier three | paper edit | D8, W3 |
+| One paragraph | Declare-vs-grant split for Cog permissions | paper edit | DV4 |
+| One paragraph | Separate in-trust-boundary sharing from open-registry install | paper edit | DV3 |
+| One column | Maturity column on the artifact table | paper edit | DV7 |
+| One qualifier | Portability holds within a manifest profile | paper edit | DV5 |
+| One paragraph | Narrow Nebi's description to environment management; state the Pixi → Nebi → artifact-format layering | paper edit | DV8 |
+| One sentence | Map Nebi onto the reproducibility tiers: delivers tier one, contributes to tier two, cannot address tier three | paper edit | DV8, W3 |
 | Short section | Split reproducibility into environment / artifact / output tiers | paper edit | W3 |
-| Glossary entry | Define Prog and Op as distinct, related concepts | glossary edit | D6 |
-| One word | Settle *must* vs *should* for declaring Guards, across §5.1, §5.6 and the glossary | paper + glossary edit | D9 |
-| One sentence | Define "worker" in §4.4 and the glossary — CogSpec's wording already works | paper + glossary edit | D10 |
-| One analogy | Container image, not manifest: the Cog contains the engine | paper edit | D10 |
-| One example | A worked `kind: complete` Cog, so "model plus harness" is visible once | spec PR | D10 |
-| Small PR | Require implementations to emit the resolved Frame set | spec PR | D2 |
-| Small PR | `provenance` block, recommended-not-required | spec PR | D3 |
+| Glossary entry | Define Prog and Op as distinct, related concepts | glossary edit | DV6 |
+| One word | Settle *must* vs *should* for declaring Guards, across §5.1, §5.6 and the glossary | paper + glossary edit | DV9 |
+| One sentence | Define "worker" in §4.4 and the glossary — CogSpec's wording already works | paper + glossary edit | DV10 |
+| One analogy | Container image, not manifest: the Cog contains the engine | paper edit | DV10 |
+| One example | A worked `kind: complete` Cog, so "model plus harness" is visible once | spec PR | DV10 |
+| Small PR | Require implementations to emit the resolved Frame set | spec PR | DV2 |
+| Small PR | `provenance` block, recommended-not-required | spec PR | DV3 |
 | Small PR | Comparison-semantics field on Guards | spec PR, blocked on §2 | W1 |
 | Document | Inventory the Guards that already exist under other names | anyone | 2a |
 | Document | Compare MAITE against a fresh Guard vocabulary | anyone | 2d |
 | Draft + trials | Guard call signature and verdict record | new work | W4, 2b |
 | Ongoing | Metrics derived from Tracks; A/B a Frame | new work | W2 |
-| Large | Signing and provenance; manifest in the core; conformance suite | new work | D3, D5 |
+| Large | Signing and provenance; manifest in the core; conformance suite | new work | DV3, DV5 |
 | *— from the prior-art survey —* | | | |
 | One field | Status lifecycle on Frames, modelled on the NEP states | spec PR | DD3 |
 | Reframing | Present the Accountability Plane as adopting proven practice, not inventing it | paper edit | §10 |
@@ -814,6 +826,6 @@ visible. "Paper edit" means a change Travis would make; "spec PR" means `frame-s
 | Design copy | Declarative verification attached to artifact definitions, MLIR-style | new work | DD4 |
 | Focus | Spend original design effort only where non-determinism enters | strategy | §10 |
 | One week | Run the interoperability test: two strangers write Guards, a third composes them | new work | §10 |
-| One paragraph | State in §4.4 that Cog `kind` *is* the sovereignty decision | paper edit | D11 |
-| Design | Let an Op declare its inference boundary, so a Validation Strategy can require in-perimeter models | new work | D11 |
-| One figure | Draw the perimeter and what crosses it | paper edit | D11 |
+| One paragraph | State in §4.4 that Cog `kind` *is* the sovereignty decision | paper edit | DV11 |
+| Design | Let an Op declare its inference boundary, so a Validation Strategy can require in-perimeter models | new work | DV11 |
+| One figure | Draw the perimeter and what crosses it | paper edit | DV11 |
