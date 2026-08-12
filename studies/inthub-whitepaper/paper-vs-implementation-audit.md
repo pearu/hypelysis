@@ -168,6 +168,12 @@ is define a Validation or Verification tool (a Guard) that must be called and pa
 output of the system."* Frame Spec v0.2 has no such field — not required, not recommended,
 not mentioned. A Frame today cannot declare a Guard.
 
+The theory makes the stakes exact: D19[frame] defines a frame as a check specification that
+is itself model-input text — the declaration is the *entire* mechanical content, since the
+prose part cannot bind a model ([translation](whitepaper-translation.md) §2.2–2.3). A Frame
+spec without a `guards:` field therefore omits the only part of the paper's Frame that
+machinery can see.
+
 **Options.** (i) Add an optional `guards:` list to Frame Spec v0.3 — but this is *blocked
 on §2*, since a reference needs something to refer to. (ii) Interim, unblocked: record
 intended Guards in the existing `metadata` string map. No runtime meaning, but it captures
@@ -379,6 +385,11 @@ dependency or an API end-point)."* If that endpoint sits outside the perimeter, 
 **every invocation** the assembled working context — Frames included — leaves the Hub, and a
 completion returns. Continuously, at a volume that dwarfs occasional artifact exchange.
 
+D11[assembly] adds that the crossing is not inspectable after the fact: boundaries between
+the assembled texts do not survive assembly, so what leaves the perimeter is one
+undifferentiated text — the receiving endpoint cannot honour distinctions the assembly
+already erased ([translation](whitepaper-translation.md) §2.4).
+
 So sovereignty is not a property of the Hub. It is a property of a single field on each Cog:
 
 | `kind` | At inference time |
@@ -432,6 +443,12 @@ problem lives in what counts as agreement. The Consensus Guard is stated only fo
 discrete case ("three Cogs classify a document and two must agree"). For numerical output,
 "equal" is a choice of tolerance, not a fact.
 
+The theory places a floor under the problem: tolerance ends where sampling begins —
+D12[sampler]'s Notes record that two symbols are the same or they are not, with no notion of
+*nearly*, so variation negligible in a scoring is not negligible in an output. A tolerance
+model must therefore live at the scoring or verdict level — Guards comparing scores or
+extracted numbers — never at the token level.
+
 **Options.** (i) Require a Guard to declare its comparison semantics as a first-class
 field: `exact`, `tolerance(rtol, atol)`, `ulp(n)`, `statistical(test, alpha)`, or `rubric`.
 One field, and Consensus Guards become implementable for continuous outputs. (ii) Adopt
@@ -461,6 +478,12 @@ as a choice.
 
 §3.2: an Op installed in one Hub *"behaves identically (within generative AI limits)"*
 elsewhere. That parenthesis carries the entire difficulty of the claim.
+
+The theory derives its exact content: a run is fixed by components, starting text, and
+draws (D14[model run]); a shipped artifact pins the texts and draws exactly, and the model
+only as a specification — a *set* of models, never one (D10[model specification],
+[translation](whitepaper-translation.md) §2.1). "Identical (within generative AI limits)"
+means: identical starting text and draws, some member of the same set.
 
 **Options.** (i) Split the claim into three tiers and claim each honestly: **environment**
 reproducibility (Nebi can genuinely guarantee this — pinned deps, OCI digests);
@@ -723,6 +746,10 @@ to need an industry.
 This supports splitting the §3.2 claim into environment / artifact / output tiers, and it
 sharpens the split: even tier one is a discipline, not a guarantee, and the paper currently
 promises tier three.
+
+The tier boundary is derived rather than observed: no text can pin which member of a
+specification's set a machine computes (D10[model specification]), so tier three is
+unreachable by packaging in principle — the FPU-denormal case is an instance of the theorem.
 
 ## 10. What the prior art implies
 
