@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 790" width="1180" height="790">
+<defs>
+<marker id="a0e7c7b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0e7c7b"/></marker>
+<marker id="a1b2a4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1b2a4a"/></marker>
+<marker id="aa03232" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#a03232"/></marker>
+<marker id="ab45309" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/></marker>
+<marker id="a6b7280" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/></marker>
+</defs>
+<rect width="1180" height="790" fill="white"/>
+<rect x="292" y="24" width="270" height="76" rx="10" fill="#fff7ed" stroke="#b45309" stroke-width="2.5"/>
+<text x="427" y="54" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="17" font-weight="bold" font-style="normal" fill="#b45309">External model API</text>
+<text x="427" y="78" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="normal" fill="#b45309">someone else&#8217;s infrastructure</text>
+<rect x="35" y="150" width="820" height="560" rx="16" fill="none" stroke="#1b2a4a" stroke-width="3" stroke-dasharray="10,7"/>
+<text x="55" y="180" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="17" font-weight="bold" font-style="normal" fill="#1b2a4a">INTELLIGENCE HUB</text>
+<text x="55" y="200" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13" font-weight="normal" font-style="normal" fill="#6b7280">your infrastructure, your governance perimeter</text>
+<rect x="316" y="248" width="456" height="94" rx="10" fill="none" stroke="#0e7c7b" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="544.0" y="234" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13.5" font-weight="normal" font-style="italic" fill="#0e7c7b">an <tspan font-weight="bold">agent</tspan> = a Cog engaged through an Op, given identity and memory by the Hub</text>
+<rect x="70" y="266" width="168" height="58" rx="9" fill="#d5e8f0" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="154.0" y="294.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="20" font-weight="bold" font-style="normal" fill="#1b2a4a">Frame</text>
+<text x="154.0" y="313.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="normal" fill="#222222">context, owned</text>
+<rect x="330" y="266" width="168" height="58" rx="9" fill="#d5e8f0" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="414.0" y="294.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="20" font-weight="bold" font-style="normal" fill="#1b2a4a">Cog</text>
+<text x="414.0" y="313.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="normal" fill="#222222">the AI worker</text>
+<rect x="590" y="266" width="168" height="58" rx="9" fill="#d5e8f0" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="674.0" y="294.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="20" font-weight="bold" font-style="normal" fill="#1b2a4a">Op</text>
+<text x="674.0" y="313.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="normal" fill="#222222">the workflow</text>
+<rect x="590" y="396" width="168" height="58" rx="9" fill="#d5e8f0" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="674.0" y="424.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="20" font-weight="bold" font-style="normal" fill="#1b2a4a">Guard</text>
+<text x="674.0" y="443.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="normal" fill="#222222">checks</text>
+<rect x="590" y="526" width="168" height="58" rx="9" fill="#d5e8f0" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="674.0" y="554.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="20" font-weight="bold" font-style="normal" fill="#1b2a4a">Gate</text>
+<text x="674.0" y="573.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="normal" fill="#222222">decides</text>
+<rect x="330" y="526" width="168" height="58" rx="9" fill="#d5e8f0" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="414.0" y="554.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="20" font-weight="bold" font-style="normal" fill="#1b2a4a">Track</text>
+<text x="414.0" y="573.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="normal" fill="#222222">the evidence</text>
+<rect x="70" y="526" width="168" height="58" rx="9" fill="#d5e8f0" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="154.0" y="554.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="15" font-weight="bold" font-style="normal" fill="#1b2a4a">Organizational</text>
+<text x="154.0" y="573.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="normal" fill="#222222">Memory</text>
+<line x1="238" y1="295.0" x2="324" y2="295.0" stroke="#0e7c7b" stroke-width="2.5" marker-end="url(#a0e7c7b)"/>
+<text x="284.0" y="286.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13" font-weight="normal" font-style="normal" fill="#0e7c7b">orients</text>
+<line x1="498" y1="295.0" x2="584" y2="295.0" stroke="#0e7c7b" stroke-width="2.5" marker-end="url(#a0e7c7b)"/>
+<text x="544.0" y="286.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13" font-weight="normal" font-style="normal" fill="#0e7c7b">used by</text>
+<line x1="674.0" y1="324" x2="674.0" y2="390" stroke="#0e7c7b" stroke-width="2.5" marker-end="url(#a0e7c7b)"/>
+<text x="726.0" y="356" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13" font-weight="normal" font-style="normal" fill="#0e7c7b">declares</text>
+<line x1="674.0" y1="454" x2="674.0" y2="520" stroke="#0e7c7b" stroke-width="2.5" marker-end="url(#a0e7c7b)"/>
+<text x="716.0" y="486" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13" font-weight="normal" font-style="normal" fill="#0e7c7b">verdict</text>
+<line x1="584" y1="555.0" x2="504" y2="555.0" stroke="#0e7c7b" stroke-width="2.5" marker-end="url(#a0e7c7b)"/>
+<text x="544.0" y="546.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13" font-weight="normal" font-style="normal" fill="#0e7c7b">recorded in</text>
+<line x1="324" y1="555.0" x2="244" y2="555.0" stroke="#0e7c7b" stroke-width="2.5" marker-end="url(#a0e7c7b)"/>
+<text x="284.0" y="546.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13" font-weight="normal" font-style="normal" fill="#0e7c7b">feeds</text>
+<line x1="154.0" y1="520" x2="154.0" y2="330" stroke="#0e7c7b" stroke-width="2.5" marker-end="url(#a0e7c7b)"/>
+<text x="102.0" y="425.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13" font-weight="normal" font-style="normal" fill="#0e7c7b">improves</text>
+<line x1="414.0" y1="214" x2="427" y2="106" stroke="#b45309" stroke-width="2.5" stroke-dasharray="7,5" marker-end="url(#ab45309)" marker-start="url(#ab45309)"/>
+<text x="600" y="138" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13" font-weight="normal" font-style="normal" fill="#b45309">if the Cog is <tspan font-weight="bold">kind: context</tspan>, your context crosses on every call</text>
+<rect x="975" y="286" width="200" height="180" rx="12" fill="#1b2a4a"/>
+<text x="1075" y="364" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="20" font-weight="bold" font-style="normal" fill="white">MARKETPLACE</text>
+<text x="1075" y="392" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13" font-weight="normal" font-style="normal" fill="#d5e8f0">other Hubs</text>
+<line x1="862" y1="352" x2="970" y2="352" stroke="#1b2a4a" stroke-width="2.5" marker-end="url(#a1b2a4a)"/>
+<line x1="970" y1="390" x2="862" y2="390" stroke="#1b2a4a" stroke-width="2.5" marker-end="url(#a1b2a4a)"/>
+<text x="916" y="333" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="normal" fill="#1b2a4a">Frames &#183; Cogs</text>
+<text x="916" y="420" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="normal" fill="#1b2a4a">Ops &#183; Guards</text>
+<text x="1075" y="488" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="italic" fill="#6b7280">packaged and moved by Nebi</text>
+<line x1="414.0" y1="584" x2="414.0" y2="676" stroke="#a03232" stroke-width="2.5" stroke-dasharray="6,5"/>
+<line x1="397.0" y1="652" x2="431.0" y2="686" stroke="#a03232" stroke-width="3.5"/>
+<line x1="431.0" y1="652" x2="397.0" y2="686" stroke="#a03232" stroke-width="3.5"/>
+<text x="450.0" y="675" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13.5" font-weight="bold" font-style="normal" fill="#a03232">Tracks never leave the Hub</text>
+<line x1="506" y1="618" x2="898" y2="618" stroke="#6b7280" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#a6b7280)"/>
+<text x="903" y="622" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#6b7280">anonymized aggregates may</text>
+</svg>

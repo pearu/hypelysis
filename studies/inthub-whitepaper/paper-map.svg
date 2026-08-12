@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 1072" width="1120" height="1072">
+<defs>
+<marker id="m0e7c7b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0e7c7b"/></marker>
+<marker id="m1b2a4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1b2a4a"/></marker>
+</defs>
+<rect width="1120" height="1072" fill="white"/>
+<text x="560.0" y="26" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="16" font-weight="bold" fill="#1b2a4a">The whitepaper's vocabulary, mapped onto the theory</text>
+<text x="60" y="50" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12" font-weight="bold" fill="#8a6d1f">the whitepaper says</text>
+<text x="560" y="50" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12" font-weight="bold" fill="#1b2a4a">mechanical</text>
+<text x="900" y="50" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12" font-weight="bold" fill="#0e7c7b">organisational</text>
+<rect x="60" y="64" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="83" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">model</text>
+<rect x="60" y="108" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="127" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">weights, "open weights</text>
+<rect x="60" y="152" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="171" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">tokenizer, tokens</text>
+<rect x="60" y="196" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="215" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">context, context window</text>
+<rect x="60" y="240" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="259" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">prompt</text>
+<rect x="60" y="284" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="303" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">generation, "the loop</text>
+<rect x="60" y="328" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="347" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">agent harness</text>
+<rect x="60" y="372" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="391" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">temperature, seeds, sampling</text>
+<rect x="60" y="416" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="435" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Guard</text>
+<rect x="60" y="460" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="479" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Gate</text>
+<rect x="60" y="504" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="523" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Track</text>
+<rect x="60" y="548" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="567" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Validation Strategy</text>
+<rect x="60" y="592" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="611" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Frame</text>
+<rect x="60" y="636" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="655" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Op</text>
+<rect x="60" y="680" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="699" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Cog</text>
+<rect x="60" y="724" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="743" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">agent</text>
+<rect x="60" y="768" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="787" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Organizational Memory</text>
+<rect x="60" y="812" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="831" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Intelligence Hub</text>
+<rect x="60" y="856" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="875" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Nebari</text>
+<rect x="60" y="900" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="919" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Nebi</text>
+<rect x="60" y="944" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="963" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">Desktop/Web App</text>
+<rect x="60" y="988" width="230" height="30" rx="15" fill="#faf6e9" stroke="#8a6d1f" stroke-width="1.4"/>
+<text x="175" y="1007" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" fill="#8a6d1f">marketplace, provenance</text>
+<rect x="560" y="64.0" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="77.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D9</text>
+<text x="624.0" y="88.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">model</text>
+<rect x="560" y="126.53333333333333" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="139.53333333333333" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D10</text>
+<text x="624.0" y="150.53333333333333" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">model specification</text>
+<rect x="560" y="189.06666666666666" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="202.06666666666666" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D3</text>
+<text x="624.0" y="213.06666666666666" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">tokenizer</text>
+<rect x="560" y="251.6" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="264.6" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D4</text>
+<text x="624.0" y="275.6" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">token</text>
+<rect x="560" y="314.1333333333333" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="327.1333333333333" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D6</text>
+<text x="624.0" y="338.1333333333333" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">token alphabet</text>
+<rect x="560" y="376.6666666666667" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="389.6666666666667" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D2</text>
+<text x="624.0" y="400.6666666666667" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">text</text>
+<rect x="560" y="439.2" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="452.2" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D11</text>
+<text x="624.0" y="463.2" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">assembly</text>
+<rect x="560" y="501.73333333333335" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="514.7333333333333" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D13</text>
+<text x="624.0" y="525.7333333333333" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">model step</text>
+<rect x="560" y="564.2666666666667" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="577.2666666666667" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D14</text>
+<text x="624.0" y="588.2666666666667" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">model run</text>
+<rect x="560" y="626.8" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="639.8" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D12</text>
+<text x="624.0" y="650.8" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">sampler</text>
+<rect x="560" y="689.3333333333334" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="702.3333333333334" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D15</text>
+<text x="624.0" y="713.3333333333334" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">check</text>
+<rect x="560" y="751.8666666666667" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="764.8666666666667" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D18</text>
+<text x="624.0" y="775.8666666666667" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">check specification</text>
+<rect x="560" y="814.4" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="827.4" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D16</text>
+<text x="624.0" y="838.4" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">decision</text>
+<rect x="560" y="876.9333333333333" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="889.9333333333333" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D17</text>
+<text x="624.0" y="900.9333333333333" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">run specification</text>
+<rect x="560" y="939.4666666666667" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="952.4666666666667" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D19</text>
+<text x="624.0" y="963.4666666666667" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">frame</text>
+<rect x="560" y="1002.0" width="128" height="32" rx="6" fill="white" stroke="#1b2a4a" stroke-width="1.6"/>
+<text x="624.0" y="1015.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#1b2a4a">D20</text>
+<text x="624.0" y="1026.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#1b2a4a">checked run</text>
+<rect x="900" y="64.0" width="128" height="32" rx="6" fill="white" stroke="#0e7c7b" stroke-width="1.6"/>
+<text x="964.0" y="77.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#0e7c7b">O4</text>
+<text x="964.0" y="88.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#0e7c7b">version</text>
+<rect x="900" y="157.8" width="128" height="32" rx="6" fill="white" stroke="#0e7c7b" stroke-width="1.6"/>
+<text x="964.0" y="170.8" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#0e7c7b">O2</text>
+<text x="964.0" y="181.8" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#0e7c7b">owner</text>
+<rect x="900" y="251.6" width="128" height="32" rx="6" fill="white" stroke="#0e7c7b" stroke-width="1.6"/>
+<text x="964.0" y="264.6" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#0e7c7b">O9</text>
+<text x="964.0" y="275.6" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#0e7c7b">retention</text>
+<rect x="900" y="345.4" width="128" height="32" rx="6" fill="white" stroke="#0e7c7b" stroke-width="1.6"/>
+<text x="964.0" y="358.4" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#0e7c7b">O8</text>
+<text x="964.0" y="369.4" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#0e7c7b">approval</text>
+<rect x="900" y="439.2" width="128" height="32" rx="6" fill="white" stroke="#0e7c7b" stroke-width="1.6"/>
+<text x="964.0" y="452.2" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#0e7c7b">O6</text>
+<text x="964.0" y="463.2" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#0e7c7b">scope</text>
+<rect x="900" y="533.0" width="128" height="32" rx="6" fill="white" stroke="#0e7c7b" stroke-width="1.6"/>
+<text x="964.0" y="546.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#0e7c7b">O3</text>
+<text x="964.0" y="557.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#0e7c7b">history</text>
+<rect x="900" y="626.8" width="128" height="32" rx="6" fill="#0e7c7b" stroke="#0e7c7b" stroke-width="1.6"/>
+<text x="964.0" y="639.8" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="white">Q4</text>
+<text x="964.0" y="650.8" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="white">obligation</text>
+<rect x="900" y="720.6" width="128" height="32" rx="6" fill="#0e7c7b" stroke="#0e7c7b" stroke-width="1.6"/>
+<text x="964.0" y="733.6" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="white">Q5</text>
+<text x="964.0" y="744.6" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="white">permission</text>
+<rect x="900" y="814.4" width="128" height="32" rx="6" fill="#0e7c7b" stroke="#0e7c7b" stroke-width="1.6"/>
+<text x="964.0" y="827.4" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="white">Q3</text>
+<text x="964.0" y="838.4" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="white">succession</text>
+<rect x="900" y="908.2" width="128" height="32" rx="6" fill="#0e7c7b" stroke="#0e7c7b" stroke-width="1.6"/>
+<text x="964.0" y="921.2" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="white">Q2</text>
+<text x="964.0" y="932.2" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="white">attribution</text>
+<rect x="900" y="1002.0" width="128" height="32" rx="6" fill="white" stroke="#0e7c7b" stroke-width="1.6"/>
+<text x="964.0" y="1015.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="9.5" font-weight="bold" fill="#0e7c7b">O7</text>
+<text x="964.0" y="1026.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10" font-weight="normal" fill="#0e7c7b">provenance</text>
+<line x1="352" y1="79" x2="556" y2="80.0" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="123" x2="556" y2="142.53333333333333" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="167" x2="556" y2="205.06666666666666" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="167" x2="556" y2="267.6" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="167" x2="556" y2="330.1333333333333" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="211" x2="556" y2="392.6666666666667" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="255" x2="556" y2="455.2" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="299" x2="556" y2="517.7333333333333" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="299" x2="556" y2="580.2666666666667" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="343" x2="556" y2="580.2666666666667" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="387" x2="556" y2="642.8" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="431" x2="556" y2="705.3333333333334" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="431" x2="556" y2="767.8666666666667" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="431" x2="896" y2="80.0" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="431" x2="896" y2="173.8" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="475" x2="556" y2="830.4" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="519" x2="556" y2="892.9333333333333" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="519" x2="896" y2="80.0" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="519" x2="896" y2="267.6" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="519" x2="896" y2="361.4" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="563" x2="556" y2="767.8666666666667" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="607" x2="556" y2="955.4666666666667" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="607" x2="896" y2="455.2" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="607" x2="896" y2="173.8" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="607" x2="896" y2="549.0" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="607" x2="896" y2="80.0" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="651" x2="556" y2="1018.0" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="651" x2="896" y2="642.8" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="651" x2="896" y2="361.4" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="695" x2="556" y2="580.2666666666667" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="695" x2="896" y2="736.6" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="695" x2="896" y2="830.4" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="739" x2="556" y2="1018.0" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="739" x2="896" y2="830.4" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="739" x2="896" y2="924.2" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="739" x2="556" y2="580.2666666666667" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="783" x2="896" y2="267.6" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="783" x2="896" y2="736.6" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="827" x2="556" y2="142.53333333333333" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="827" x2="896" y2="924.2" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="827" x2="896" y2="736.6" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="871" x2="896" y2="173.8" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="871" x2="896" y2="549.0" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="915" x2="556" y2="142.53333333333333" stroke="#1b2a4a" stroke-width="1.0" opacity="0.5" marker-end="url(#m1b2a4a)"/>
+<line x1="352" y1="915" x2="896" y2="830.4" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="959" x2="896" y2="361.4" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="959" x2="896" y2="642.8" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="959" x2="896" y2="455.2" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+<line x1="352" y1="1003" x2="896" y2="1018.0" stroke="#0e7c7b" stroke-width="1.0" opacity="0.5" marker-end="url(#m0e7c7b)"/>
+</svg>

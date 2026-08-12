@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 1136" width="1120" height="1136">
+<defs>
+<marker id="m1b2a4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1b2a4a"/></marker>
+<marker id="ma03232" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#a03232"/></marker>
+<marker id="m0e7c7b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0e7c7b"/></marker>
+<marker id="m166534" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#166534"/></marker>
+</defs>
+<rect width="1120" height="1136" fill="white"/>
+<text x="470" y="38" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="22" font-weight="bold" font-style="normal" fill="#1b2a4a">Any Op — the shape</text>
+<text x="470" y="68" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13.5" font-weight="normal" font-style="italic" fill="#6b7280">what every Op does, whatever the work is</text>
+<rect x="270.0" y="106" width="400" height="46" rx="23" fill="white" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="470" y="134.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13.5" font-weight="normal" font-style="normal" fill="#1b2a4a">a person, a schedule, or another Op</text>
+<rect x="52" y="176" width="196" height="52" rx="9" fill="#d5e8f0" stroke="#0e7c7b" stroke-width="2"/>
+<text x="150" y="197" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="bold" font-style="normal" fill="#0e7c7b">FRAMES</text>
+<text x="150" y="214.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10.5" font-weight="normal" font-style="normal" fill="#222222">the Frames in scope</text>
+<line x1="250" y1="202" x2="264.0" y2="202" stroke="#0e7c7b" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#m0e7c7b)"/>
+<line x1="470" y1="152" x2="470" y2="180" stroke="#1b2a4a" stroke-width="2.5" marker-end="url(#m1b2a4a)"/>
+<rect x="270.0" y="186" width="400" height="108" rx="9" fill="#d5e8f0" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="284.0" y="207" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="bold" font-style="normal" fill="#1b2a4a">PRE-FLIGHT</text>
+<text x="284.0" y="225" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12" font-weight="normal" font-style="italic" fill="#6b7280">Is this Op allowed to run at all?</text>
+<text x="284.0" y="244.0" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" font-style="normal" fill="#222222">• permission Guard</text>
+<text x="284.0" y="260.0" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" font-style="normal" fill="#222222">• required-Frame Guard</text>
+<text x="284.0" y="276.0" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" font-style="normal" fill="#222222">• data-authorization Guard</text>
+<line x1="470" y1="294" x2="470" y2="322" stroke="#1b2a4a" stroke-width="2.5" marker-end="url(#m1b2a4a)"/>
+<polygon points="470,328 586,372 470,416 354,372" fill="white" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="470" y="360" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="bold" font-style="normal" fill="#1b2a4a">GATE</text>
+<text x="470" y="382.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10.5" font-weight="normal" font-style="normal" fill="#222222">any pre-flight Guard fails</text>
+<line x1="586" y1="372" x2="682" y2="372" stroke="#a03232" stroke-width="2.5" marker-end="url(#ma03232)"/>
+<rect x="686" y="350" width="240" height="44" rx="8" fill="#fdf3f3" stroke="#a03232" stroke-width="2"/>
+<text x="806" y="377.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" font-style="normal" fill="#a03232">refuse — the Op never starts</text>
+<text x="634" y="364" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11" font-weight="normal" font-style="normal" fill="#a03232">fail</text>
+<text x="486" y="438" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11" font-weight="normal" font-style="normal" fill="#166534">pass</text>
+<line x1="470" y1="416" x2="470" y2="444" stroke="#1b2a4a" stroke-width="2.5" marker-end="url(#m1b2a4a)"/>
+<rect x="270.0" y="450" width="400" height="92" rx="9" fill="#d5e8f0" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="284.0" y="471" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="bold" font-style="normal" fill="#1b2a4a">IN-FLIGHT</text>
+<text x="284.0" y="489" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12" font-weight="normal" font-style="italic" fill="#6b7280">Is the work staying inside policy?</text>
+<text x="284.0" y="508.0" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" font-style="normal" fill="#222222">• the Cogs do the work</text>
+<text x="284.0" y="524.0" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" font-style="normal" fill="#222222">• policy · privacy · confidence Guards</text>
+<line x1="470" y1="542" x2="470" y2="570" stroke="#1b2a4a" stroke-width="2.5" marker-end="url(#m1b2a4a)"/>
+<polygon points="470,576 586,620 470,664 354,620" fill="white" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="470" y="608" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="bold" font-style="normal" fill="#1b2a4a">GATE</text>
+<text x="470" y="630.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10.5" font-weight="normal" font-style="normal" fill="#222222">a bound is exceeded</text>
+<line x1="586" y1="620" x2="682" y2="620" stroke="#a03232" stroke-width="2.5" marker-end="url(#ma03232)"/>
+<rect x="686" y="598" width="240" height="44" rx="8" fill="#fdf3f3" stroke="#a03232" stroke-width="2"/>
+<text x="806" y="625.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" font-style="normal" fill="#a03232">pause, escalate, or stop</text>
+<text x="634" y="612" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11" font-weight="normal" font-style="normal" fill="#a03232">fail</text>
+<text x="486" y="686" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11" font-weight="normal" font-style="normal" fill="#166534">pass</text>
+<line x1="470" y1="664" x2="470" y2="692" stroke="#1b2a4a" stroke-width="2.5" marker-end="url(#m1b2a4a)"/>
+<rect x="270.0" y="698" width="400" height="92" rx="9" fill="#d5e8f0" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="284.0" y="719" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="bold" font-style="normal" fill="#1b2a4a">POST-RUN</text>
+<text x="284.0" y="737" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12" font-weight="normal" font-style="italic" fill="#6b7280">Is the result fit to act on?</text>
+<text x="284.0" y="756.0" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" font-style="normal" fill="#222222">• schema · source-grounding · consensus Guards</text>
+<text x="284.0" y="772.0" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" font-style="normal" fill="#222222">• expert sampling</text>
+<line x1="470" y1="790" x2="470" y2="818" stroke="#1b2a4a" stroke-width="2.5" marker-end="url(#m1b2a4a)"/>
+<polygon points="470,824 586,868 470,912 354,868" fill="white" stroke="#1b2a4a" stroke-width="2.5"/>
+<text x="470" y="856" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="bold" font-style="normal" fill="#1b2a4a">GATE</text>
+<text x="470" y="878.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10.5" font-weight="normal" font-style="normal" fill="#222222">the result is not trusted</text>
+<line x1="586" y1="868" x2="682" y2="868" stroke="#a03232" stroke-width="2.5" marker-end="url(#ma03232)"/>
+<rect x="686" y="846" width="240" height="44" rx="8" fill="#fdf3f3" stroke="#a03232" stroke-width="2"/>
+<text x="806" y="873.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11.5" font-weight="normal" font-style="normal" fill="#a03232">revise, review, or discard</text>
+<text x="634" y="860" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11" font-weight="normal" font-style="normal" fill="#a03232">fail</text>
+<text x="486" y="934" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="11" font-weight="normal" font-style="normal" fill="#166534">pass</text>
+<line x1="470" y1="912" x2="470" y2="940" stroke="#1b2a4a" stroke-width="2.5" marker-end="url(#m1b2a4a)"/>
+<rect x="270.0" y="946" width="400" height="46" rx="23" fill="#f0fdf4" stroke="#166534" stroke-width="2.5"/>
+<text x="470" y="974.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="13.5" font-weight="bold" font-style="normal" fill="#166534">the action is taken</text>
+<rect x="948" y="172" width="104" height="820" rx="10" fill="#1b2a4a" opacity="0.93"/>
+<text x="1000" y="212" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="17" font-weight="bold" font-style="normal" fill="white">T</text>
+<text x="1000" y="238" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="17" font-weight="bold" font-style="normal" fill="white">R</text>
+<text x="1000" y="264" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="17" font-weight="bold" font-style="normal" fill="white">A</text>
+<text x="1000" y="290" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="17" font-weight="bold" font-style="normal" fill="white">C</text>
+<text x="1000" y="316" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="17" font-weight="bold" font-style="normal" fill="white">K</text>
+<text x="1000" y="360" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10.5" font-weight="normal" font-style="normal" fill="#d5e8f0">every</text>
+<text x="1000" y="374" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10.5" font-weight="normal" font-style="normal" fill="#d5e8f0">stage</text>
+<text x="1000" y="388" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="10.5" font-weight="normal" font-style="normal" fill="#d5e8f0">recorded</text>
+<rect x="60" y="1026" width="992" height="40" rx="9" fill="#f4f6f9" stroke="#0e7c7b" stroke-width="2" stroke-dasharray="6,4"/>
+<text x="556.0" y="1051.0" text-anchor="middle" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12.5" font-weight="normal" font-style="normal" fill="#0e7c7b">CONTINUOUS — drift and regression Guards watch across runs</text>
+<text x="60" y="1092" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12" font-weight="bold" font-style="normal" fill="#6b7280">A Gate always chooses from the same seven:</text>
+<text x="60" y="1110" text-anchor="start" font-family="DejaVu Sans,Helvetica,sans-serif" font-size="12" font-weight="normal" font-style="normal" fill="#6b7280">continue  ·  pause  ·  request human approval  ·  escalate to an expert  ·  retry with a different Cog  ·  run more validation  ·  stop</text>
+</svg>
