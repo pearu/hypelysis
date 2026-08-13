@@ -25,7 +25,8 @@ import urllib.request
 
 
 class Provider:
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str):
+        """Returns (text, meta) — meta holds cost/duration/token accounting."""
         raise NotImplementedError
 
     def spec(self) -> dict:
@@ -33,26 +34,39 @@ class Provider:
 
 
 class ClaudeCLI(Provider):
-    def __init__(self, model: str, cwd: str, timeout: int = 600):
+    def __init__(self, model: str, cwd: str, timeout: int = 600, effort: str = None):
         self.model, self.cwd, self.timeout = model, cwd, timeout
+        self.effort = effort
 
     def argv(self, system: str) -> list:
         return ["claude", "-p",
                 "--system-prompt", system,
                 "--setting-sources", "",
                 "--strict-mcp-config",
-                "--model", self.model]
+                "--output-format", "json",
+                "--model", self.model] + (
+                ["--effort", self.effort] if self.effort else [])
 
     def complete(self, system, user):
         r = subprocess.run(self.argv(system), input=user, text=True,
                            capture_output=True, cwd=self.cwd, timeout=self.timeout)
         if r.returncode != 0:
             raise RuntimeError(f"claude-cli failed ({r.returncode}): {r.stderr[:500]}")
-        return r.stdout
+        d = json.loads(r.stdout)
+        usage = d.get("usage", {})
+        meta = {"cost_usd": d.get("total_cost_usd"),
+                "duration_ms": d.get("duration_ms"),
+                "duration_api_ms": d.get("duration_api_ms"),
+                "num_turns": d.get("num_turns"),
+                "input_tokens": usage.get("input_tokens"),
+                "cache_read_tokens": usage.get("cache_read_input_tokens"),
+                "cache_write_tokens": usage.get("cache_creation_input_tokens"),
+                "output_tokens": usage.get("output_tokens")}
+        return d.get("result", ""), meta
 
     def spec(self):
         return {"provider": "claude-cli", "model": self.model,
-                "argv": self.argv("<system>")}
+                "effort": self.effort, "argv": self.argv("<system>")}
 
 
 class OpenAIHTTP(Provider):
@@ -72,7 +86,11 @@ class OpenAIHTTP(Provider):
                      **({"Authorization": f"Bearer {self.api_key}"} if self.api_key else {})})
         with urllib.request.urlopen(req, timeout=self.timeout) as resp:
             out = json.load(resp)
-        return out["choices"][0]["message"]["content"]
+        usage = out.get("usage", {})
+        meta = {"cost_usd": None,
+                "input_tokens": usage.get("prompt_tokens"),
+                "output_tokens": usage.get("completion_tokens")}
+        return out["choices"][0]["message"]["content"], meta
 
     def spec(self):
         return {"provider": "openai-http", "base_url": self.base_url,
@@ -82,7 +100,8 @@ class OpenAIHTTP(Provider):
 def make(cfg: dict, sandbox: str) -> Provider:
     kind = cfg.get("provider", "claude-cli")
     if kind == "claude-cli":
-        return ClaudeCLI(cfg["model"], cwd=sandbox, timeout=cfg.get("timeout", 600))
+        return ClaudeCLI(cfg["model"], cwd=sandbox, timeout=cfg.get("timeout", 600),
+                         effort=cfg.get("effort"))
     if kind == "openai-http":
         return OpenAIHTTP(cfg["base_url"], cfg["model"], cfg.get("api_key", ""),
                           cfg.get("temperature", 1.0), cfg.get("timeout", 600))

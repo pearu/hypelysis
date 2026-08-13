@@ -23,6 +23,9 @@ import sys
 import time
 
 import providers
+from concurrent.futures import ThreadPoolExecutor
+import threading
+_loglock = threading.Lock()
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHECKS = ["groundedness", "skeptic", "minimality"]   # AI checks; rules_check is a script
@@ -51,7 +54,9 @@ class Study:
 
     def role(self, name, **fmt):
         prompt = open(os.path.join(HERE, "roles", f"{name.split(':')[0]}.md")).read()
-        return prompt.format(**fmt) if fmt else prompt
+        for k, v in fmt.items():
+            prompt = prompt.replace("{" + k + "}", v)
+        return prompt
 
     def provider(self, role):
         cfg = self.cfg.get("roles", {}).get(role) or self.cfg["default"]
@@ -60,11 +65,13 @@ class Study:
     def call(self, role, system, user):
         p = self.provider(role)
         t0 = time.time()
-        text = p.complete(system, user)
+        text, meta = p.complete(system, user)
         rec = {"role": role, "spec": p.spec(), "seconds": round(time.time() - t0, 1),
+               "meta": meta,
                "system_sha": hash(system) & 0xffffffff, "output": text}
-        with open(os.path.join(self.out, "log", "rounds.jsonl"), "a") as f:
-            f.write(json.dumps(rec) + "\n")
+        with _loglock:
+            with open(os.path.join(self.out, "log", "rounds.jsonl"), "a") as f:
+                f.write(json.dumps(rec) + "\n")
         return providers.json_out(text)
 
     def milestone_gate(self, name):
@@ -72,6 +79,8 @@ class Study:
         approved = self.state.get("approved", [])
         if name in approved:
             return
+        self.state["pending_milestone"] = name
+        save(self.state_p, self.state)
         req = os.path.join(self.out, "APPROVAL-REQUIRED.md")
         with open(req, "w") as f:
             f.write(f"# Approval required: {name}\n\nReview the artifacts in this "
@@ -85,20 +94,33 @@ class Study:
 def phase_extract(st: Study):
     doc = open(os.path.join(st.sandbox, "document.md")).read()
     rb = open(os.path.join(st.sandbox, "rulebook.md")).read()
+    n = st.cfg.get("extractors", 3)
+    with ThreadPoolExecutor(n) as ex:
+        outs = list(ex.map(lambda i: st.call("extractor", st.role("extractor"),
+                    f"RULEBOOK:\n{rb}\n\nDOCUMENT:\n{doc}"), range(n)))
     merged, seen = [], set()
-    for i in range(st.cfg.get("extractors", 3)):
-        out = st.call("extractor", st.role("extractor"),
-                      f"RULEBOOK:\n{rb}\n\nDOCUMENT:\n{doc}")
+    for out in outs:
         for t in out.get("terms", []):
             key = t["term"].strip().lower()
             if key not in seen:
                 seen.add(key)
                 merged.append(t)
-    save(os.path.join(st.out, "candidates.json"), merged)
+    save(os.path.join(st.out, "candidates-raw.json"), merged)
+    merge_queue(st, merged)
+    print(f"extraction: {len(merged)} raw candidates")
+
+
+def merge_queue(st: Study, merged):
+    rb = open(os.path.join(st.sandbox, "rulebook.md")).read()
+    out = st.call("merger", st.role("merger"),
+                  f"RULEBOOK:\n{rb}\n\nRAW CANDIDATES:\n{json.dumps(merged, indent=1)}")
+    queue = out["queue"]
+    save(os.path.join(st.out, "candidates.json"), queue)
     st.state["phase"] = "foundation-lane1"
-    st.state["queue"] = [t["term"] for t in merged]
+    st.state["queue_lane1"] = [t["term"] for t in queue if t.get("lane") != "people"]
+    st.state["queue_lane2"] = [t["term"] for t in queue if t.get("lane") == "people"]
     save(st.state_p, st.state)
-    print(f"extraction: {len(merged)} candidate terms")
+    print(f"queue: {len(st.state['queue_lane1'])} mechanism + {len(st.state['queue_lane2'])} people")
 
 
 def rules_check(st: Study, foundation: str) -> dict:
@@ -121,13 +143,17 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
     verdicts = {}
     payload = prop["payload"]
     verdicts["rules"] = rules_check(st, fnd + "\n\n" + payload if prop["move"] == "entry" else payload)
-    for c in CHECKS:
-        verdicts[c] = st.call(c, st.role(c),
-                              f"RULEBOOK:\n{rb}\n\nFOUNDATION:\n{fnd}\n\nPROPOSAL:\n{payload}")
-    restatements = []
+    jobs = {c: (c, st.role(c),
+                f"RULEBOOK:\n{rb}\n\nFOUNDATION:\n{fnd}\n\nPROPOSAL:\n{payload}")
+            for c in CHECKS}
     for i, profile in enumerate(READER_PROFILES):
-        r = st.call(f"reader:{i}", st.role("reader", profile=profile), f"ENTRY:\n{payload}")
-        restatements.append(r)
+        jobs[f"reader:{i}"] = (f"reader:{i}", st.role("reader", profile=profile),
+                               f"ENTRY:\n{payload}")
+    with ThreadPoolExecutor(len(jobs)) as ex:
+        results = dict(zip(jobs, ex.map(lambda a: st.call(*a), jobs.values())))
+    for c in CHECKS:
+        verdicts[c] = results[c]
+    restatements = [results[f"reader:{i}"] for i in range(len(READER_PROFILES))]
     # readers agree iff no reader reports ambiguity; divergence checking of the
     # restatements themselves is the skeptic's job in the next round's feedback
     verdicts["readers"] = {"verdict": "ok" if not any(r.get("ambiguous") for r in restatements)
@@ -140,7 +166,8 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
 
 def phase_foundation(st: Study, lane: str):
     budget = st.cfg.get("retry_budget", 3)
-    queue = st.state.get("queue", [])
+    qkey = "queue_lane1" if lane == "lane1" else "queue_lane2"
+    queue = st.state.get(qkey, [])
     while queue:
         term = queue[0]
         feedback = ""
@@ -159,7 +186,7 @@ def phase_foundation(st: Study, lane: str):
         else:
             record_refusal(st, term)
         queue.pop(0)
-        st.state["queue"] = queue
+        st.state[qkey] = queue
         save(st.state_p, st.state)
     st.state["phase"] = "foundation-lane2" if lane == "lane1" else "report"
     save(st.state_p, st.state)
@@ -200,11 +227,13 @@ def main():
         save(st.state_p, st.state)
         print(f"initialized {out}; sandbox holds the document and rulebook only")
     elif cmd == "approve":
-        st.state.setdefault("approved", []).append(st.state["phase"])
+        name = st.state.get("pending_milestone") or st.state["phase"]
+        st.state.setdefault("approved", []).append(name)
+        st.state["pending_milestone"] = None
         save(st.state_p, st.state)
         req = os.path.join(out, "APPROVAL-REQUIRED.md")
         os.path.exists(req) and os.remove(req)
-        print(f"approved: {st.state['phase']}")
+        print(f"approved: {name}")
     elif cmd == "run":
         phase = st.state.get("phase", "extraction")
         if phase == "extraction":

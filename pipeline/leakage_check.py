@@ -13,7 +13,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 BANNED = [
     # the subject document's coinages
-    "frame", "cog", "op ", "guard", "gate", "track", "intelligence hub",
+    "frame", "cog", "op", "guard", "gate", "track", "intelligence hub",
     "nebari", "nebi", "organizational memory", "validation strategy",
     "accountability plane", "marketplace",
     # the manual study's coinages
@@ -26,7 +26,7 @@ hits = []
 for path in [os.path.join(HERE, "rulebook.md")] + sorted(glob.glob(os.path.join(HERE, "roles/*.md"))):
     low = open(path).read().lower()
     for term in BANNED:
-        for m in re.finditer(re.escape(term), low):
+        if re.search(rf'\b{re.escape(term)}\b', low):
             hits.append(f"{os.path.basename(path)}: {term!r}")
 print("\n".join(sorted(set(hits))) or "leakage check: clean")
 sys.exit(1 if hits else 0)
