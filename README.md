@@ -9,6 +9,12 @@ solution is machinery. What refuses to dissolve is about people — ownership, o
 provenance — and gets a ledger of its own. **The gap between what a document says and what
 its words can do is the finding.**
 
+Equivalently, in terms of claims rather than words: hypelysis sorts a document's claims by
+where their grounds live — derivable from grounds already present, resident elsewhere than
+the words assert, or genuinely absent — against a ground it *builds* rather than assumes.
+Its typical finding is mis-grounding, not groundlessness: the strongest claims of a hyped
+document tend to survive translation with better foundations than the document gave them.
+
 See [METHOD.md](METHOD.md) for the approach and [RULES.md](RULES.md) for the rules every
 ledger obeys.
 
