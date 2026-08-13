@@ -36,6 +36,11 @@ pipeline can supply it.
 - `leakage_check.py` enforces that the rulebook and role prompts contain no vocabulary from
   the subject document or the manual study. Design-level influence (the pipeline borrows the
   manual method's ideas) is permitted and declared; runtime contamination is not.
+- **Known residual (probed, irreducible):** the `claude-cli` adapter delivers the logged-in
+  account's email and the current date to every worker; no flag removes it. `probe.py` is run
+  in every new environment and its report kept. For subject documents affiliated with the
+  account's domain this is a declared bias vector; the clean path is the `openai-http`
+  adapter.
 - Every worker call is logged with its exact invocation; every round's proposal, verdicts,
   and decision are logged; rejections are kept with their reports.
 
@@ -53,8 +58,9 @@ against the key. The document and key are committed as reusable fixtures.
 1. **done** — rulebook, role prompts, providers (`claude-cli`, `openai-http`), orchestrator
    (init/run/approve, resumable state, round logs, milestone gates), mechanical `check.py`,
    `leakage_check.py` (clean).
-2. Manufacture the calibration document + answer key; contamination probe (a worker asked to
-   report every instruction it has; anything beyond the role prompt fails).
+2. **done** — calibration document + answer key manufactured by a fresh isolated writer
+   (`calibration/`: a fictional vendor whitepaper, six plants verified present); `probe.py`
+   run — it caught the residual leak now documented above, which is the probe working.
 3. Dry run on the calibration document; score detection; fix the loop; add the report phase
    (author-feedback assembly and the claim-tagging roles).
 4. The subject-document run with owner milestone gates.

@@ -11,6 +11,13 @@ Two adapters:
 
 Every call is logged with the exact invocation, so a run records what produced
 each text — which provider, which model, which flags.
+
+Known residual leak of the claude-cli adapter, found by probe.py and not
+removable by any flag combination as of CLI verification: the logged-in
+account's email address and the current date reach every worker via a
+CLI-injected context block. Harmless for neutral subjects; a declared bias
+vector when the subject document is affiliated with the account's domain —
+route such runs through openai-http, or declare the vector in the run record.
 """
 import json
 import subprocess
