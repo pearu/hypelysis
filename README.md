@@ -25,6 +25,9 @@ RULES.md       the rules, clarifications, and entry format shared by all ledgers
 METHOD.md      the approach: ledgers, translation + residue, the practices
 tools/         check.py (integrity checker) · make_graphs.py (graphs, generated
                not drawn) · build.sh (PDF pipeline)
+pipeline/      the automated method: a checked-run orchestrator over fresh AI
+               workers, provider-agnostic (claude CLI or any OpenAI-compatible
+               endpoint) — see pipeline/PLAN.md
 studies/       one directory per document studied
 ```
 

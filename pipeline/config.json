@@ -1,0 +1,10 @@
+{
+  "default": {"provider": "claude-cli", "model": "claude-sonnet-5"},
+  "roles": {
+    "skeptic": {"provider": "claude-cli", "model": "claude-opus-5"},
+    "_example_local": {"provider": "openai-http", "base_url": "http://localhost:11434",
+                       "model": "llama3", "api_key": ""}
+  },
+  "extractors": 3,
+  "retry_budget": 3
+}
