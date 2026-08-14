@@ -301,3 +301,45 @@ class TestReportRendering(unittest.TestCase):
         filed = open(os.path.join(self.study, "RUN-REPORT.md")).read()
         self.assertIn("| proposer | 1 | 4500 |", filed)
         self.assertIn("2500000", filed)
+
+
+class TestTermCounts(unittest.TestCase):
+    """The report says how many terms the study found and how far it has got."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.study = os.path.join(self.dir, "study")
+        cli.main([self.study, "init", os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "fixtures", "sprocket.md")])
+        json.dump([{"term": "a"}, {"term": "b"}, {"term": "c", "lane": "people"}],
+                  open(os.path.join(self.study, "candidates.json"), "w"))
+        json.dump([{"term": x} for x in "abcde"],
+                  open(os.path.join(self.study, "candidates-raw.json"), "w"))
+        st = orchestrate.Study(self.study)
+        st.state["queue_lane1"] = ["b"]
+        orchestrate.save(st.state_p, st.state)
+        with open(os.path.join(self.study, "log", "decisions.jsonl"), "w") as f:
+            for term, attempt, decision in (("a", 0, "retry"), ("a", 1, "accept"),
+                                            ("c", 0, "escalate"), ("b", 0, "retry")):
+                f.write(json.dumps({"term": term, "attempt": attempt,
+                                    "decision": decision}) + "\n")
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def test_candidates_are_counted_by_lane_and_against_the_raw_draw(self):
+        line = report._terms(report.gather(self.study))
+        self.assertIn("3 candidates (2 mechanism, 1 people)", line)
+        self.assertIn("merged from 5 raw", line)
+
+    def test_a_term_still_being_retried_is_not_counted_as_settled(self):
+        line = report._terms(report.gather(self.study))
+        self.assertIn("2 settled (1 accept, 1 escalate)", line)
+        self.assertIn("1 in progress", line)
+        self.assertIn("1 still queued", line)
+
+    def test_both_renderings_carry_the_counts(self):
+        shown = report.build(self.study)
+        self.assertIn("terms     3 candidates", shown)
+        self.assertIn("Terms: 3 candidates",
+                      open(os.path.join(self.study, "RUN-REPORT.md")).read())

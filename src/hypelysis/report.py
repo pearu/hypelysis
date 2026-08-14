@@ -20,6 +20,9 @@ from collections import defaultdict
 from . import provenance
 
 TOKEN_KEYS = ("input_tokens", "cache_read_tokens", "cache_write_tokens", "output_tokens")
+# A term is settled when its last decision ended it; a retry means the run is
+# still working on it, and counting that as settled would overstate progress.
+SETTLED = ("accept", "defer", "escalate", "prerequisites")
 
 
 def gather(out: str) -> dict:
@@ -52,10 +55,17 @@ def gather(out: str) -> dict:
     sp = os.path.join(out, "state.json")
     if os.path.exists(sp):
         state = json.load(open(sp))
+    cp = os.path.join(out, "candidates.json")
+    candidates = json.load(open(cp)) if os.path.exists(cp) else []
+    rp = os.path.join(out, "candidates-raw.json")
+    raw = json.load(open(rp)) if os.path.exists(rp) else []
     invocations = rows("invocations.jsonl")
     runs = [r for r in invocations if r.get("command") == "run"]
     latest = runs[-1] if runs else (invocations[-1] if invocations else None)
     return {"study": out, "machine_choices": state.get("machine_choices") or [],
+            "candidates": candidates, "raw_candidates": len(raw),
+            "queued": len(state.get("queue_lane1") or []) + len(state.get("queue_lane2") or []),
+            "phase": state.get("phase"),
             "calls": calls, "by_role": by_role, "costs": costs,
             "toks": toks, "outcome": outcome, "attempts": attempts,
             "code": latest, "settings": (latest or {}).get("settings") or {},
@@ -85,6 +95,34 @@ def _setting(v):
     return v
 
 
+def _terms(data: dict) -> str:
+    """What the study is working through: how many terms it found, how far it
+    has got, and what is left."""
+    cands = data["candidates"]
+    bits = []
+    if cands:
+        mech = sum(1 for c in cands if c.get("lane") != "people")
+        found = f"{len(cands)} candidates ({mech} mechanism, {len(cands) - mech} people)"
+        if data["raw_candidates"] and data["raw_candidates"] != len(cands):
+            found += f", merged from {data['raw_candidates']} raw"
+        bits.append(found)
+    tally = defaultdict(int)
+    for v in data["outcome"].values():
+        tally[v] += 1
+    settled = {k: v for k, v in tally.items() if k in SETTLED}
+    if settled:
+        bits.append(f"{sum(settled.values())} settled (" +
+                    ", ".join(f"{v} {k}" for k, v in sorted(settled.items())) + ")")
+    in_flight = sum(v for k, v in tally.items() if k not in SETTLED)
+    if in_flight:
+        bits.append(f"{in_flight} in progress")
+    if data["queued"]:
+        bits.append(f"{data['queued']} still queued")
+    elif cands and data["outcome"]:
+        bits.append("queue empty")
+    return "; ".join(bits)
+
+
 def _table(headers, rows, aligns=None, indent="  ") -> list:
     """Columns wide enough for their content, numbers to the right."""
     if not rows:
@@ -109,6 +147,8 @@ def text(data: dict) -> str:
         s = ", ".join(f"{k}={_setting(v)}" for k, v in data["settings"].items())
         lines += textwrap.wrap(s, width=76, initial_indent="settings  ",
                                subsequent_indent="          ")
+    if data["candidates"] or data["outcome"]:
+        lines.append(f"terms     {_terms(data)}")
     if len(data["versions"]) > 1:
         lines += ["", f"WARNING: advanced by {len(data['versions'])} different versions "
                   "of the code;", "         see log/invocations.jsonl before comparing "
@@ -163,6 +203,8 @@ def markdown(data: dict) -> str:
         lines += ["", f"Code: {provenance.describe(data['code'])}"]
     if data["settings"]:
         lines.append("Settings: " + ", ".join(f"{k}={v}" for k, v in data["settings"].items()))
+    if data["candidates"] or data["outcome"]:
+        lines.append(f"Terms: {_terms(data)}")
     if len(data["versions"]) > 1:
         lines += ["", f"**This study was advanced by {len(data['versions'])} different "
                   "versions of the code**; see log/invocations.jsonl before comparing its "
