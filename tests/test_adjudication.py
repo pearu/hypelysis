@@ -34,18 +34,20 @@ class Adjudication(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.dir, ignore_errors=True)
 
+    OPTIONS = ["one value", "one attribute", "declared ambiguity"]
+
     def fake(self, verdicts, pick=0, close=False):
         """A stand-in worker: option-lister, then one adjudicator per option,
-        then the arbiter."""
-        seen = {"adjudicator": 0}
+        then the arbiter. The adjudicators run in parallel, so a verdict is
+        matched to the option actually under test, never to call order."""
 
         def call(role, system, user, draw=0, resume=None, provider_as=None):
             self.calls.append(role)
             if role == "options":
-                return {"options": ["one value", "one attribute", "declared ambiguity"]}
+                return {"options": list(self.OPTIONS)}
             if role == "adjudicator":
-                i = seen["adjudicator"]
-                seen["adjudicator"] += 1
+                option = user.split("OPTION UNDER TEST:\n")[1].strip()
+                i = self.OPTIONS.index(option)
                 return {"verdict": verdicts[i], "failing_case": f"case {i}"}
             if role == "arbiter":
                 return {"pick": pick, "why": "the document's counts stay coherent",
@@ -111,10 +113,11 @@ class TestKeepGoing(Adjudication):
         self.assertEqual(self.choices()[0]["mode"], "machine-selected")
 
     def test_it_picks_among_survivors_only(self):
+        """The arbiter naming a refuted option does not get to choose it."""
         self.st.cfg["keep_going"] = "best"
         self.fake(["refuted", "survives", "survives"], pick=0)
-        out = orchestrate.adjudicate(self.st, "widget", ESCALATION)
-        self.assertNotIn("one value", out.split("Options tested")[0])
+        orchestrate.adjudicate(self.st, "widget", ESCALATION)
+        self.assertIn(self.choices()[0]["chosen"], self.OPTIONS[1:])
 
     def test_when_everything_is_refuted_it_still_moves(self):
         self.st.cfg["keep_going"] = "best"
