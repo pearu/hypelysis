@@ -131,6 +131,16 @@ class Study:
             return sid
         return None   # primer failed; caller falls back to inline packaging
 
+    def drop_primer(self, sid):
+        """Forget a primer session that no longer resumes."""
+        sessions = self.state.get("primer_sessions") or {}
+        stale = [k for k, v in sessions.items() if v == sid]
+        for k in stale:
+            del sessions[k]
+        if stale:
+            save(self.state_p, self.state)
+        return bool(stale)
+
     def call(self, role, system, user, draw=0, resume=None, provider_as=None):
         self.last_meta = None
         n = self.state.get("call_count", 0) + 1
@@ -159,7 +169,13 @@ class Study:
         try:
             text, meta = p.complete(system, user, resume=resume)
         except Exception as e:
-            rec = {"role": role, "spec": p.spec(),
+            if resume:
+                # A stored session that no longer resumes would fail every
+                # call that forks it, stalling the run for good. Drop it: the
+                # next attempt primes a fresh one and keeps the packaging the
+                # run was configured with, rather than silently going inline.
+                self.drop_primer(resume)
+            rec = {"role": role, "spec": p.spec(), "at": t0,
                    "seconds": round(time.time() - t0, 1), "error": str(e)[:500]}
             with _loglock:
                 d = load(nowp, {}); d.pop(role, None); save(nowp, d)
@@ -167,7 +183,8 @@ class Study:
                     f.write(json.dumps(rec) + "\n")
             return {"verdict": "no", "objections": [f"WORKER ERROR: {str(e)[:200]}"],
                     "worker_error": True}
-        rec = {"role": role, "spec": p.spec(), "seconds": round(time.time() - t0, 1),
+        rec = {"role": role, "spec": p.spec(), "at": t0,
+               "seconds": round(time.time() - t0, 1),
                "resumed": bool(resume), "meta": meta,
                "system_sha": hash(system) & 0xffffffff,
                # a stable digest of the exact prompt, so a finished run can be

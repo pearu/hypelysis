@@ -199,3 +199,51 @@ class TestGateCycleUnderReplay(ReplayStudy):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSessionResilience(unittest.TestCase):
+    """A primer session that no longer resumes must not stall a run."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.study = os.path.join(self.dir, "study")
+        cli.main([self.study, "init", DOC])
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def test_a_failed_resume_drops_the_session_so_the_next_try_re_primes(self):
+        st = orchestrate.Study(self.study)
+        st.state["primer_sessions"] = {"key-a": "dead-session", "key-b": "live-session"}
+        orchestrate.save(st.state_p, st.state)
+        st = orchestrate.Study(self.study)
+
+        class Boom:
+            def complete(self, system, user, resume=None):
+                raise RuntimeError("claude-cli failed (1): no such session")
+
+            def spec(self):
+                return {"provider": "boom", "model": "boom"}
+
+        st.provider = lambda role: Boom()
+        verdict = st.call("proposer", "sys", "user", resume="dead-session")
+        self.assertTrue(verdict["worker_error"])
+        left = json.load(open(st.state_p))["primer_sessions"]
+        self.assertNotIn("key-a", left)
+        self.assertEqual(left["key-b"], "live-session")
+
+    def test_calls_are_timestamped(self):
+        st = orchestrate.Study(self.study)
+
+        class Fixed:
+            def complete(self, system, user, resume=None):
+                return '{"verdict": "ok"}', {"cost_usd": 0.0}
+
+            def spec(self):
+                return {"provider": "fixed", "model": "fixed"}
+
+        st.provider = lambda role: Fixed()
+        st.call("proposer", "sys", "user")
+        rec = [json.loads(l) for l in
+               open(os.path.join(self.study, "log", "rounds.jsonl"))][-1]
+        self.assertGreater(rec["at"], 1_700_000_000)
