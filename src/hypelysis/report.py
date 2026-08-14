@@ -12,6 +12,8 @@ import os
 import sys
 from collections import defaultdict
 
+from . import provenance
+
 
 def build(out: str) -> str:
     def rows(name):
@@ -36,7 +38,20 @@ def build(out: str) -> str:
             costs[r] += m["cost_usd"]
         for k in ("input_tokens", "cache_read_tokens", "cache_write_tokens", "output_tokens"):
             toks[r][k] += m.get(k) or 0
-    lines = ["# Run report", "", f"Study: `{out}`", "", "## Worker calls", "",
+    invocations = rows("invocations.jsonl")
+    lines = ["# Run report", "", f"Study: `{out}`"]
+    if invocations:
+        runs = [r for r in invocations if r.get("command") == "run"]
+        lines += ["", f"Code: {provenance.describe(runs[-1] if runs else invocations[-1])}"]
+        settings = (runs[-1] if runs else invocations[-1]).get("settings") or {}
+        if settings:
+            lines.append("Settings: " + ", ".join(f"{k}={v}" for k, v in settings.items()))
+        codes = {provenance.describe(r) for r in runs}
+        if len(codes) > 1:
+            lines += ["", f"**This study was advanced by {len(codes)} different versions of "
+                      "the code**; see log/invocations.jsonl before comparing its numbers "
+                      "with another study's."]
+    lines += ["", "## Worker calls", "",
              "| role | calls | total s | mean s | max s | out tok | cache-w | cache-r | cost $ |",
              "|---|---|---|---|---|---|---|---|---|"]
     total, total_cost = 0.0, 0.0

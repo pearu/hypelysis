@@ -25,6 +25,7 @@ import os
 import sys
 
 from . import orchestrate
+from . import provenance
 from . import report as report_mod
 from . import watch as watch_mod
 from .orchestrate import Study
@@ -93,6 +94,14 @@ def add_config_flags(p: argparse.ArgumentParser):
                         "--set retry_budget=5 --set roles.skeptic.model=claude-opus-5")
 
 
+def stamp(st: Study, command: str, argv=None):
+    """Record the code and settings about to touch this study, before they do."""
+    rec = provenance.record(st.out, command, st.cfg, argv=argv)
+    st.state["provenance"] = rec
+    orchestrate.save(st.state_p, st.state)
+    return rec
+
+
 def cmd_status(st: Study):
     state = st.state
     if not state:
@@ -111,6 +120,7 @@ def cmd_status(st: Study):
     print(f"settled: {len(outcomes)} terms" +
           (" (" + ", ".join(f"{k}: {v}" for k, v in sorted(tally.items())) + ")" if tally else ""))
     print(f"calls:   {state.get('call_count', 0)}")
+    print(f"code:    {provenance.describe(state.get('provenance'))}")
     if state.get("now_term"):
         print(f"last on: {state['now_term']}")
     approved = state.get("approved", [])
@@ -147,6 +157,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
+    raw = list(sys.argv[1:] if argv is None else argv)
     args = build_parser().parse_args(argv)
     out = args.study
     if args.command == "watch":
@@ -164,6 +175,7 @@ def main(argv=None) -> int:
                              deep_update(existing, over))
         st = Study(out)
         orchestrate.cmd_init(st, args.documents)
+        stamp(st, "init", raw)
         return 0
 
     st = Study(out, overrides=over)
@@ -171,7 +183,9 @@ def main(argv=None) -> int:
         raise SystemExit(f"no study in {out} — `hypelysis {out} init <document>...` first")
     if args.command == "status":
         cmd_status(st)
-    elif args.command == "approve":
+        return 0
+    stamp(st, args.command, raw)
+    if args.command == "approve":
         orchestrate.cmd_approve(st)
     elif args.command == "resolve":
         orchestrate.cmd_resolve(st, args.term, " ".join(args.decision))
