@@ -52,6 +52,7 @@ def gather(out: str) -> dict:
         attempts[d["term"]] = d["attempt"] + 1
         outcome[d["term"]] = d["decision"]
     timing = term_times(calls, decisions)
+    wall = busy_wall(calls)
 
     state = {}
     sp = os.path.join(out, "state.json")
@@ -70,9 +71,28 @@ def gather(out: str) -> dict:
             "phase": state.get("phase"),
             "calls": calls, "by_role": by_role, "costs": costs,
             "toks": toks, "outcome": outcome, "attempts": attempts,
-            "timing": timing,
+            "timing": timing, "wall": wall,
             "code": latest, "settings": (latest or {}).get("settings") or {},
             "versions": {provenance.describe(r) for r in runs}}
+
+
+def busy_wall(calls: list) -> float:
+    """Wall time the study was actually working: the union of the intervals
+    its calls occupied. Summing call durations counts parallel workers several
+    times over; subtracting first start from last end counts the gaps between
+    invocations, when nothing was running at all. This counts neither."""
+    spans = sorted((c["at"], c["at"] + (c.get("seconds") or 0)) for c in calls
+                   if c.get("at") is not None)
+    total, cur_start, cur_end = 0.0, None, None
+    for start, end in spans:
+        if cur_end is None or start > cur_end:
+            total += (cur_end - cur_start) if cur_end is not None else 0.0
+            cur_start, cur_end = start, end
+        else:
+            cur_end = max(cur_end, end)
+    if cur_end is not None:
+        total += cur_end - cur_start
+    return total
 
 
 def term_times(calls: list, decisions: list) -> dict:
@@ -221,10 +241,15 @@ def text(data: dict) -> str:
                      _tokens(tot_tok["output_tokens"]),
                      _tokens(tot_tok["cache_write_tokens"]),
                      _tokens(tot_tok["cache_read_tokens"]), f"${tot_cost:.2f}"])
-        lines += ["", "worker calls"]
+        lines += ["", "worker calls — per-role times are worker time, "
+                  "the sum of call durations"]
         body = _table(["role", "calls", "total", "mean", "max", "out tok",
                        "cache-w", "cache-r", "cost"], rows)
         lines += body[:-1] + ["  " + "-" * (len(body[0]) - 2), body[-1]]
+        if data["wall"]:
+            lines.append(f"  {_dur(data['wall'])} of wall time while working "
+                         f"({tot_s / data['wall']:.1f}x parallel; gaps between "
+                         "invocations not counted)")
 
     unowned = [m for m in data["machine_choices"] if m["mode"] == "machine-selected"]
     if unowned:
@@ -278,8 +303,9 @@ def markdown(data: dict) -> str:
                      f"{sum(secs)/len(secs):.0f} | {max(secs):.0f} | {t['output_tokens']} | "
                      f"{t['cache_write_tokens']} | {t['cache_read_tokens']} | "
                      f"{data['costs'].get(role, 0.0):.2f} |")
-    lines += ["", f"**{len(data['calls'])} calls, {total:.0f}s total worker time, "
-              f"${total_cost:.2f} recorded cost.**", ""]
+    wall = f", {data['wall']:.0f}s of wall time while working" if data["wall"] else ""
+    lines += ["", f"**{len(data['calls'])} calls, {total:.0f}s total worker time"
+              f"{wall}, ${total_cost:.2f} recorded cost.**", ""]
     if data["outcome"]:
         counts = defaultdict(int)
         for v in data["outcome"].values():

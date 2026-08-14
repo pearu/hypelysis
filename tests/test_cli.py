@@ -386,3 +386,27 @@ class TestTermTiming(unittest.TestCase):
                  {"role": "chair", "at": 10.0, "seconds": 5.0}]
         t = report.term_times(calls, [{"term": "widget", "decision": "accept"}])
         self.assertEqual(t["widget"]["wall"], 15.0)
+
+
+class TestWallTime(unittest.TestCase):
+    """Worker time and wall time are different quantities and say so."""
+
+    def test_parallel_calls_are_counted_once(self):
+        calls = [{"role": "skeptic", "at": 0.0, "seconds": 30.0},
+                 {"role": "reader", "at": 0.0, "seconds": 30.0},
+                 {"role": "chair", "at": 30.0, "seconds": 10.0}]
+        self.assertEqual(report.busy_wall(calls), 40.0)      # not 70s of worker time
+
+    def test_gaps_between_invocations_are_not_counted(self):
+        calls = [{"role": "proposer", "at": 0.0, "seconds": 10.0},
+                 {"role": "proposer", "at": 10_000.0, "seconds": 10.0}]
+        self.assertEqual(report.busy_wall(calls), 20.0)      # not the 10,010s span
+
+    def test_overlapping_runs_of_calls_merge(self):
+        calls = [{"role": "a", "at": 0.0, "seconds": 10.0},
+                 {"role": "b", "at": 5.0, "seconds": 10.0},
+                 {"role": "c", "at": 12.0, "seconds": 3.0}]
+        self.assertEqual(report.busy_wall(calls), 15.0)
+
+    def test_a_log_without_timestamps_reports_no_wall_time(self):
+        self.assertEqual(report.busy_wall([{"role": "a", "seconds": 10.0}]), 0.0)
