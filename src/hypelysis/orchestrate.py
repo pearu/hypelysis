@@ -1,35 +1,30 @@
 #!/usr/bin/env python3
-"""The hypelysis pipeline: a checked run over foundation entries.
+"""The engine of a study: a checked run over foundation entries.
 
 One candidate term per round: the proposer drafts a move; the checks return
 verdicts; the gate accepts, retries with feedback, defers, or refuses. Every
-round is logged. At each milestone the pipeline STOPS and writes an approval
+round is logged. At each milestone the run STOPS and writes an approval
 request — the owner's approval is an input the machinery waits for, not a step
 it performs.
 
-Usage:
-  python3 pipeline/orchestrate.py init  <study-out-dir> <document>...
-  python3 pipeline/orchestrate.py run   <study-out-dir>
-  python3 pipeline/orchestrate.py approve <study-out-dir>   (records the owner's go)
-
-State lives in <study-out-dir>/state.json; the run is resumable and every
-worker call is recorded in <study-out-dir>/log/rounds.jsonl.
+Driven through the command line (see hypelysis.cli): `hypelysis <study> init
+<document>...` then `hypelysis <study> run`. State lives in <study>/state.json;
+the run is resumable and every worker call is recorded in
+<study>/log/rounds.jsonl.
 """
 import json
 import re
 import os
-import shutil
-import subprocess
 import sys
 import time
 
 import hashlib
-import providers
+from . import providers
+from . import resources
+from .check import check_text
 from concurrent.futures import ThreadPoolExecutor
 import threading
 _loglock = threading.Lock()
-
-HERE = os.path.dirname(os.path.abspath(__file__))
 CHECKS = ["groundedness", "skeptic", "minimality"]   # AI checks; rules_check is a script
 GENERIC_SYSTEM = ("You are one worker in a checked run that studies a document. "
                   "The message you receive holds shared materials, then YOUR ROLE "
@@ -50,14 +45,26 @@ def save(path, obj):
     json.dump(obj, open(path, "w"), indent=1)
 
 
+def deep_update(dst: dict, src: dict) -> dict:
+    """Merge src into dst, nested dicts included — a config override that
+    names one role's model must not drop that role's other settings."""
+    for k, v in src.items():
+        if isinstance(v, dict) and isinstance(dst.get(k), dict):
+            deep_update(dst[k], v)
+        else:
+            dst[k] = v
+    return dst
+
+
 class Study:
-    def __init__(self, out):
+    def __init__(self, out, overrides: dict = None):
         self.out = out
         self.sandbox = os.path.join(out, "sandbox")
         self.state_p = os.path.join(out, "state.json")
         self.state = load(self.state_p, {})
-        self.cfg = load(os.path.join(HERE, "config.json"), {})
-        self.cfg.update(load(os.path.join(out, "config.json"), {}))  # run-local overrides
+        self.cfg = resources.default_config()
+        deep_update(self.cfg, load(os.path.join(out, "config.json"), {}))  # run-local
+        deep_update(self.cfg, overrides or {})                             # CLI flags win
         self.last_meta = None
         self.cache = {}
         cp = os.path.join(out, "log", "callcache.jsonl")
@@ -67,7 +74,7 @@ class Study:
                 self.cache[r["key"]] = r["output"]
 
     def role(self, name, **fmt):
-        prompt = open(os.path.join(HERE, "roles", f"{name.split(':')[0]}.md")).read()
+        prompt = resources.role(name)
         for k, v in fmt.items():
             prompt = prompt.replace("{" + k + "}", v)
         return prompt
@@ -78,7 +85,7 @@ class Study:
         # is the same instrument at a different draw, so the model is pinned
         cfg = roles.get(role) or roles.get(role.split(":")[0]) \
             or self.cfg["default"]
-        return providers.make(cfg, self.sandbox)
+        return providers.make(cfg, self.sandbox, role=role)
 
     def packaged(self, role_prompt, shared, tail):
         """Default packaging: the role prompt is the system prompt, so each
@@ -162,7 +169,10 @@ class Study:
                     "worker_error": True}
         rec = {"role": role, "spec": p.spec(), "seconds": round(time.time() - t0, 1),
                "resumed": bool(resume), "meta": meta,
-               "system_sha": hash(system) & 0xffffffff, "output": text}
+               "system_sha": hash(system) & 0xffffffff,
+               # a stable digest of the exact prompt, so a finished run can be
+               # replayed by the fake provider without storing the prompts
+               "prompt_sha": providers.prompt_sha(system, user), "output": text}
         with _loglock:
             d = load(nowp, {}); d.pop(role, None); save(nowp, d)
             with open(os.path.join(self.out, "log", "rounds.jsonl"), "a") as f:
@@ -187,8 +197,7 @@ class Study:
         req = os.path.join(self.out, "APPROVAL-REQUIRED.md")
         with open(req, "w") as f:
             f.write(f"# Approval required: {name}\n\nReview the artifacts in this "
-                    f"directory, then run:\n\n    python3 pipeline/orchestrate.py "
-                    f"approve {self.out}\n")
+                    f"directory, then run:\n\n    hypelysis {self.out} approve\n")
         print(f"\nSTOP — milestone '{name}' awaits owner approval ({req})")
         sys.exit(0)
 
@@ -290,12 +299,8 @@ def view_foundation(fnd: str, mode: str, term: str = None, st=None) -> str:
 
 
 def rules_check(st: Study, foundation: str) -> dict:
-    cap = st.cfg.get("note_cap")
-    r = subprocess.run([sys.executable, os.path.join(HERE, "check.py"), "-"]
-                       + (["--note-cap", str(cap)] if cap else []),
-                       input=foundation, text=True, capture_output=True)
-    return {"verdict": "ok" if r.returncode == 0 else "no",
-            "objections": r.stdout.strip().splitlines() if r.returncode else []}
+    problems = check_text(foundation, st.cfg.get("note_cap"))
+    return {"verdict": "no" if problems else "ok", "objections": problems}
 
 
 def presupposed_by(st: Study, term: str) -> list:
@@ -624,69 +629,62 @@ def record_escalation(st: Study, term, last):
             for r in (v.get("restatements") or []):
                 for a in (r.get("ambiguous") or [])[:1]:
                     f.write(f"- (reader) {str(a)[:300]}\n")
-        f.write(f"\nResolve with:\n    python3 pipeline/orchestrate.py resolve "
-                f"{st.out} \"{term}\" \"<your decision>\"\n")
+        f.write(f"\nResolve with:\n    hypelysis {st.out} resolve "
+                f"\"{term}\" \"<your decision>\"\n")
 
 
-# ------------------------------------------------------------------ main
-def main():
-    cmd, out = sys.argv[1], sys.argv[2]
-    st = Study(out)
-    if cmd == "init":
-        os.makedirs(st.sandbox, exist_ok=True)
-        os.makedirs(os.path.join(out, "log"), exist_ok=True)
-        docs = [open(d).read() for d in sys.argv[3:]]
-        open(os.path.join(st.sandbox, "document.md"), "w").write("\n\n".join(docs))
-        shutil.copy(os.path.join(HERE, "rulebook.md"), st.sandbox)
-        st.state = {"phase": "extraction", "approved": []}
-        save(st.state_p, st.state)
-        print(f"initialized {out}; sandbox holds the document and rulebook only")
-    elif cmd == "resolve":
-        term, decision = sys.argv[3], " ".join(sys.argv[4:])
-        st.state.setdefault("resolutions", {})[term] = decision
-        for qk in ("queue_lane1", "queue_lane2"):
-            q = st.state.get(qk, [])
-            if term not in q and qk == "queue_lane1":
-                q.insert(0, term)
-                st.state[qk] = q
-                break
-        save(st.state_p, st.state)
-        print(f"resolution recorded; '{term}' re-queued with the owner's decision as feedback")
-    elif cmd == "approve":
-        name = st.state.get("pending_milestone") or st.state["phase"]
-        st.state.setdefault("approved", []).append(name)
-        st.state["pending_milestone"] = None
-        save(st.state_p, st.state)
-        req = os.path.join(out, "APPROVAL-REQUIRED.md")
-        os.path.exists(req) and os.remove(req)
-        print(f"approved: {name}")
-    elif cmd == "run":
-        phase = st.state.get("phase", "extraction")
-        if phase == "extraction":
-            phase_extract(st)
-            st.milestone_gate("extraction")
-        elif phase == "foundation-lane1":
-            st.milestone_gate("extraction")
-            phase_foundation(st, "lane1")
-            st.milestone_gate("foundation-lane1")
-        elif phase == "foundation-lane2":
-            phase_foundation(st, "lane2")
-            st.milestone_gate("foundation-lane2")
-        elif phase == "report":
-            print("report phase: built in build-phase 4")
-    else:
-        print(__doc__)
-        sys.exit(2)
+# ------------------------------------------------------------------ commands
+def cmd_init(st: Study, documents: list):
+    """Create the study: its sandbox holds the documents under study and the
+    rulebook, nothing else — a worker sees the method and the subject."""
+    os.makedirs(st.sandbox, exist_ok=True)
+    os.makedirs(os.path.join(st.out, "log"), exist_ok=True)
+    docs = [open(d).read() for d in documents]
+    open(os.path.join(st.sandbox, "document.md"), "w").write("\n\n".join(docs))
+    open(os.path.join(st.sandbox, "rulebook.md"), "w").write(resources.rulebook())
+    st.state = {"phase": "extraction", "approved": []}
+    save(st.state_p, st.state)
+    print(f"initialized {st.out} from {len(docs)} document(s); "
+          "sandbox holds the document and rulebook only")
 
 
-if __name__ == "__main__":
-    try:
-        main()
-    except SystemExit:
-        raise
-    except BaseException:
-        import traceback
-        out = sys.argv[2] if len(sys.argv) > 2 else "."
-        with open(os.path.join(out, "log", "error.txt"), "a") as f:
-            f.write(traceback.format_exc() + "\n")
-        raise
+def cmd_resolve(st: Study, term: str, decision: str):
+    """Record the owner's decision on an escalated term and re-queue it; the
+    decision reaches the proposer as binding feedback."""
+    st.state.setdefault("resolutions", {})[term] = decision
+    for qk in ("queue_lane1", "queue_lane2"):
+        q = st.state.get(qk, [])
+        if term not in q and qk == "queue_lane1":
+            q.insert(0, term)
+            st.state[qk] = q
+            break
+    save(st.state_p, st.state)
+    print(f"resolution recorded; '{term}' re-queued with the owner's decision as feedback")
+
+
+def cmd_approve(st: Study):
+    """Record the owner's approval of the milestone the run is waiting on."""
+    name = st.state.get("pending_milestone") or st.state.get("phase")
+    st.state.setdefault("approved", []).append(name)
+    st.state["pending_milestone"] = None
+    save(st.state_p, st.state)
+    req = os.path.join(st.out, "APPROVAL-REQUIRED.md")
+    os.path.exists(req) and os.remove(req)
+    print(f"approved: {name}")
+
+
+def cmd_run(st: Study):
+    """Advance the study to its next owner gate."""
+    phase = st.state.get("phase", "extraction")
+    if phase == "extraction":
+        phase_extract(st)
+        st.milestone_gate("extraction")
+    elif phase == "foundation-lane1":
+        st.milestone_gate("extraction")
+        phase_foundation(st, "lane1")
+        st.milestone_gate("foundation-lane1")
+    elif phase == "foundation-lane2":
+        phase_foundation(st, "lane2")
+        st.milestone_gate("foundation-lane2")
+    elif phase == "report":
+        print("report phase: built in build-phase 4")

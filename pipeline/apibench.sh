@@ -12,5 +12,5 @@ text, meta = AnthropicHTTP("claude-sonnet-5", max_tokens=32).complete(
 print("smoke:", text.strip()[:20], meta)
 PY
 echo "== arm API: shared-prefix-blocks over anthropic-http =="
-python3 pipeline/orchestrate.py run pipeline/runs/field-api
+hypelysis pipeline/runs/field-api run
 python3 pipeline/benchreport.py

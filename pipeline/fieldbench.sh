@@ -19,7 +19,7 @@ done
 echo "$(date +%H:%M) limit clear"
 
 echo "== arm A: shared-prefix packaging =="
-python3 pipeline/orchestrate.py run pipeline/runs/field-a
+hypelysis pipeline/runs/field-a run
 
 echo "== resume smoke test =="
 SID=$(echo "Remember the word: plover. Reply ok." | claude -p \
@@ -36,9 +36,9 @@ echo "resume smoke answer: '$ANSWER'"
 case "$ANSWER" in
   *plover*|*Plover*)
     echo "== arm B: conversational proposer =="
-    python3 pipeline/orchestrate.py run pipeline/runs/field-b
+    hypelysis pipeline/runs/field-b run
     echo "== arm AB: both =="
-    python3 pipeline/orchestrate.py run pipeline/runs/field-ab
+    hypelysis pipeline/runs/field-ab run
     ;;
   *)
     echo "RESUME SMOKE FAILED — session state does not survive claude -p --resume"

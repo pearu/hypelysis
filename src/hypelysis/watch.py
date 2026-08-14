@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 """Live view of a running study: every worker call and decision as it lands.
 
-Usage: python3 pipeline/watch.py [study-dir]      (Ctrl-C to stop watching)
+Usage: python -m hypelysis.watch <study-dir>      (Ctrl-C to stop watching)
+   or: hypelysis <study-dir> watch
 """
 import json
 import os
 import sys
 import time
-
-out = sys.argv[1] if len(sys.argv) > 1 else 'pipeline/runs/meridian'
-paths = {p: 0 for p in ("rounds.jsonl", "decisions.jsonl")}
 
 
 def outcome(r):
@@ -78,45 +76,64 @@ def fmt_decision(d):
     return f"■ {d['term']} attempt {d['attempt']}: {d['decision'].upper()}{ch}{fails}"
 
 
-# start from current end of files; show only what happens from now on
-for name in paths:
-    p = os.path.join(out, "log", name)
-    paths[name] = os.path.getsize(p) if os.path.exists(p) else 0
-print(f"watching {out} (events from now on; Ctrl-C to stop)")
-now_p = os.path.join(out, "log", "now.json")
-now_txt = os.path.join(out, "log", "now.txt")
-last_now = None
-while True:
-    for name, pos in list(paths.items()):
+def watch(out: str):
+    """Tail a study's logs, printing each call and decision as it lands.
+    Starts at the current end of the files: only what happens from now on."""
+    paths = {p: 0 for p in ("rounds.jsonl", "decisions.jsonl")}
+    for name in paths:
         p = os.path.join(out, "log", name)
-        if not os.path.exists(p) or os.path.getsize(p) <= pos:
-            continue
-        with open(p) as f:
-            f.seek(pos)
-            for line in f:
-                if not line.strip():
-                    continue
-                rec = json.loads(line)
-                print(fmt_round(rec) if name == "rounds.jsonl" else fmt_decision(rec),
-                      flush=True)
-            paths[name] = f.tell()
-    if not os.path.exists(now_p) and os.path.exists(now_txt):
-        cur = open(now_txt).read().strip()          # pre-registry orchestrator
-        if cur and cur != last_now:
-            print(f"  … {cur}", flush=True)
-            last_now = cur
-    elif os.path.exists(now_p):
-        try:
-            d = json.load(open(now_p))
-        except Exception:
-            d = {}
-        members = frozenset(d)
-        if members != last_now:
-            if d:
-                now = time.time()
-                term = next(iter(d.values()))["term"]
-                flight = "  ".join(f"{r}({now - v['t0']:.0f}s)"
-                                   for r, v in sorted(d.items(), key=lambda x: x[1]["t0"]))
-                print(f"  ⋮ in flight ({term}): {flight}   [{len(d)} parallel]", flush=True)
-            last_now = members
-    time.sleep(2)
+        paths[name] = os.path.getsize(p) if os.path.exists(p) else 0
+    print(f"watching {out} (events from now on; Ctrl-C to stop)")
+    now_p = os.path.join(out, "log", "now.json")
+    now_txt = os.path.join(out, "log", "now.txt")
+    last_now = None
+    while True:
+        for name, pos in list(paths.items()):
+            p = os.path.join(out, "log", name)
+            if not os.path.exists(p) or os.path.getsize(p) <= pos:
+                continue
+            with open(p) as f:
+                f.seek(pos)
+                for line in f:
+                    if not line.strip():
+                        continue
+                    rec = json.loads(line)
+                    print(fmt_round(rec) if name == "rounds.jsonl" else fmt_decision(rec),
+                          flush=True)
+                paths[name] = f.tell()
+        if not os.path.exists(now_p) and os.path.exists(now_txt):
+            cur = open(now_txt).read().strip()          # pre-registry orchestrator
+            if cur and cur != last_now:
+                print(f"  … {cur}", flush=True)
+                last_now = cur
+        elif os.path.exists(now_p):
+            try:
+                d = json.load(open(now_p))
+            except Exception:
+                d = {}
+            members = frozenset(d)
+            if members != last_now:
+                if d:
+                    now = time.time()
+                    term = next(iter(d.values()))["term"]
+                    flight = "  ".join(f"{r}({now - v['t0']:.0f}s)"
+                                       for r, v in sorted(d.items(), key=lambda x: x[1]["t0"]))
+                    print(f"  ⋮ in flight ({term}): {flight}   [{len(d)} parallel]", flush=True)
+                last_now = members
+        time.sleep(2)
+
+
+def main(argv=None) -> int:
+    argv = list(sys.argv if argv is None else argv)
+    if len(argv) < 2:
+        print(__doc__)
+        return 2
+    try:
+        watch(argv[1])
+    except KeyboardInterrupt:
+        print()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

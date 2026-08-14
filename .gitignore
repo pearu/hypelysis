@@ -1,3 +1,4 @@
-.tmp.html
-.tmp.err
 __pycache__/
+*.egg-info/
+build/
+dist/

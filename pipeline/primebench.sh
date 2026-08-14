@@ -11,5 +11,5 @@ until probe; do
 done
 RUN="${1:-field-prime}"
 echo "== arm $RUN: session-primer packaging =="
-python3 pipeline/orchestrate.py run "pipeline/runs/$RUN"
+hypelysis "pipeline/runs/$RUN" run
 python3 pipeline/benchreport.py

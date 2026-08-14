@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hypelysis"
+version = "0.1.0"
+description = "Read a document on its merits: a checked run that settles what its terms mean before its claims are examined"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+authors = [{ name = "Pearu Peterson" }]
+dependencies = []
+
+[project.scripts]
+hypelysis = "hypelysis.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+hypelysis = ["data/rulebook.md", "data/config.json", "data/roles/*.md"]

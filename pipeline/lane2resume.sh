@@ -9,6 +9,6 @@ until probe; do
   echo "$(date +%H:%M) usage limit active; next probe in 20 min"; sleep 1200
 done
 echo "$(date +%H:%M) limit clear — lane 2, control arm"
-python3 pipeline/orchestrate.py run pipeline/runs/meridian
+hypelysis pipeline/runs/meridian run
 echo "== lane 2, lean arm =="
-python3 pipeline/orchestrate.py run pipeline/runs/meridian-lean
+hypelysis pipeline/runs/meridian-lean run
