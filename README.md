@@ -68,16 +68,21 @@ command line where other processes could read it.
 
 ### A study is one reading, not the only one
 
-The workers are drawn fresh and they answer independently, so two runs of the same document
-do not settle on the same foundation. They differ in which terms get extracted, in how many
-rounds an entry takes, and in what an entry leaves open — two runs of the calibration
-document extracted 39 and 32 candidate terms from the same text. What survives across runs
-is what the checks enforce: an entry that uses only earlier entries, a statement short enough
-to check, openness declared rather than glossed over. Read a study's output as one defensible
-reading with its reasoning attached, and compare runs where the difference matters, rather
-than expecting a canonical answer. Comparing two arms of an experiment therefore means fixing
-what you are not testing — a treatment arm forked from a control's own candidate set varies
-only in the treatment.
+The workers are drawn fresh and they answer independently, so two runs over the same document
+do not settle on the same foundation — and the variation is measured, not hypothetical. In
+three extractions of one calibration document, any two runs shared 73–84% of their candidate
+terms, and the three extractor draws *within* a single run agreed on only ~58% of their own
+union; each run also caught a headline concept of the document that another run missed.
+Effort varies too: two runs of the identical extraction stage differed ~1.8× in output tokens
+and worker time. Some of this self-heals — a term extraction missed is pulled in mid-run the
+moment a definition needs it — and what survives every run is what the checks enforce: entries
+that use only earlier entries, statements short enough to check, openness declared rather
+than glossed over.
+
+So read a study's output as one defensible reading with its reasoning attached, not a
+canonical answer. And when comparing two configurations, fix what you are not testing (same
+document, same candidate set) *and* expect run-to-run noise on what remains: a difference
+smaller than the variation between two runs of the same configuration is not a finding.
 
 ### Tests, and running the run path without an AI
 
