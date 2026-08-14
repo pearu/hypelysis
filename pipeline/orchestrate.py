@@ -226,33 +226,67 @@ def merge_queue(st: Study, merged):
     print(f"queue: {len(st.state['queue_lane1'])} mechanism + {len(st.state['queue_lane2'])} people")
 
 
-NORMATIVE = re.compile(r"\bopen\b|openness|declar|left to|left open|never|"
-                       r"immutab|finding against|inherit", re.I)
+FIELD_START = re.compile(r"^(Kind|Given|Statement|Because|Uses|Notation|Defers|Open"
+                         r"|Finding|Note|Worked example):")
+# Author-facing fields, dropped from every prior entry in a lean worker view.
+VIEW_DROP = {"Finding", "Note", "Worked example"}
+# Never stripped at any level: the lane-2 A/B showed checks re-derive
+# stripped declarations as objections, at a retry round apiece.
+DECLARATIONS = {"Defers", "Open"}
+# Aggressive mode reduces out-of-neighborhood entries to these.
+VIEW_MINIMAL = {"Given", "Statement"} | DECLARATIONS
 
 
-def lean_view(fnd: str) -> str:
-    """Worker view of the foundation: every field intact except Note, which is
-    reduced to its first sentence plus any sentence carrying a normative
-    declaration (openness, semantics, inheritance), capped at 4 sentences.
-    The on-disk foundation.md remains the full record; only prompts shrink."""
-    out, note = [], None
-    def flush():
-        if note is None:
-            return
-        sents = re.split(r"(?<=[.!?])\s+", " ".join(note).strip())
-        keep = [x for i, x in enumerate(sents)
-                if i == 0 or NORMATIVE.search(x)][:4]
-        out.append("Note: " + " ".join(keep))
-    for line in fnd.splitlines():
-        if re.match(r"Note:", line):
-            flush(); note = [line[5:]]
-        elif note is not None and not re.match(r"(### |[A-Z][a-z]+:)", line):
-            note.append(line)
-        else:
-            flush(); note = None
-            out.append(line)
-    flush()
-    return "\n".join(out)
+def view_foundation(fnd: str, mode: str, term: str = None, st=None) -> str:
+    """Worker view of the foundation; the on-disk file remains the full
+    record, only prompts shrink. 'lean' drops the author-facing fields
+    (Finding, Note, worked examples) from every entry. 'lean-aggressive'
+    additionally reduces entries outside the candidate term's dependency
+    neighborhood (its presupposed terms, closed over Uses lines) to
+    Given/Statement plus declarations."""
+    if mode not in ("lean", "lean-aggressive"):
+        return fnd
+    blocks = re.split(r"(?=^### )", fnd, flags=re.M)
+    uses = {}
+    for b in blocks:
+        m = re.match(r"^### (.+)", b)
+        u = re.search(r"^Uses: ?(.*)", b, re.M)
+        if m and u and u.group(1).strip().lower() != "everyday language only":
+            uses[m.group(1).strip().lower()] = [x.strip().lower()
+                                               for x in u.group(1).split(",") if x.strip()]
+    neighborhood = None
+    if mode == "lean-aggressive" and term and st:
+        seed = [p.strip().lower() for c in load(os.path.join(st.out, "candidates.json"), [])
+                if c["term"].strip().lower() == term.strip().lower()
+                for p in (c.get("presupposes") or [])]
+        neighborhood = set(seed)
+        frontier = list(seed)
+        while frontier:
+            for n in uses.get(frontier.pop(), []):
+                if n not in neighborhood:
+                    neighborhood.add(n)
+                    frontier.append(n)
+    out = []
+    for b in blocks:
+        m = re.match(r"^### (.+)", b)
+        if not m:
+            out.append(b)
+            continue
+        keep = None
+        if neighborhood is not None and m.group(1).strip().lower() not in neighborhood:
+            keep = VIEW_MINIMAL
+        lines, field = [m.group(0)], None
+        for line in b.splitlines()[1:]:
+            fs = FIELD_START.match(line)
+            if fs:
+                field = fs.group(1)
+            if field in VIEW_DROP:
+                continue
+            if keep is not None and field is not None and field not in keep:
+                continue
+            lines.append(line)
+        out.append("\n".join(lines).rstrip() + "\n\n")
+    return "".join(out)
 
 
 def rules_check(st: Study, foundation: str) -> dict:
@@ -276,8 +310,7 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
     doc = open(os.path.join(st.sandbox, "document.md")).read()
     fnd = open(os.path.join(st.out, "foundation.md")).read() \
         if os.path.exists(os.path.join(st.out, "foundation.md")) else "(empty)"
-    if st.cfg.get("foundation_view") == "lean":
-        fnd = lean_view(fnd)
+    fnd = view_foundation(fnd, st.cfg.get("foundation_view"), term, st)
     shared = (f"DOCUMENT UNDER STUDY:\n{doc}\n\nRULEBOOK:\n{rb}\n\n"
               f"FOUNDATION:\n{fnd}\n\n")
     conv = st.cfg.get("proposer_mode") == "conversational"
