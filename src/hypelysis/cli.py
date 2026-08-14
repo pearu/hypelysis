@@ -63,6 +63,8 @@ def overrides_from(args) -> dict:
         cfg["default"] = role
     if getattr(args, "view", None):
         cfg["foundation_view"] = args.view
+    if getattr(args, "keep_going", None):
+        cfg["keep_going"] = args.keep_going
     for assignment in getattr(args, "set", None) or []:
         if "=" not in assignment:
             raise SystemExit(f"--set needs key=value, got {assignment!r}")
@@ -89,6 +91,12 @@ def add_config_flags(p: argparse.ArgumentParser):
                    help="how much of the foundation each worker is shown: full "
                         "record, or leaner views that drop author-facing fields "
                         "(declarations are never dropped)")
+    p.add_argument("--keep-going", dest="keep_going", nargs="?", const="best",
+                   choices=["best", "random"], metavar="best|random",
+                   help="do not stop for the owner when an escalation's options "
+                        "cannot be settled by refutation: pick one and mark the "
+                        "study as carrying a choice its owner never made. For "
+                        "benchmarks — a study of record needs the owner (RULES.md R4)")
     p.add_argument("--set", action="append", metavar="KEY=VALUE",
                    help="any other config setting, dotted for nesting, e.g. "
                         "--set retry_budget=5 --set roles.skeptic.model=claude-opus-5")
@@ -121,6 +129,12 @@ def cmd_status(st: Study):
           (" (" + ", ".join(f"{k}: {v}" for k, v in sorted(tally.items())) + ")" if tally else ""))
     print(f"calls:   {state.get('call_count', 0)}")
     print(f"code:    {provenance.describe(state.get('provenance'))}")
+    machine = state.get("machine_choices") or []
+    unowned = [m for m in machine if m["mode"] == "machine-selected"]
+    if machine:
+        print(f"choices: {len(machine)} settled without the owner "
+              f"({len(machine) - len(unowned)} adjudicated, {len(unowned)} "
+              f"machine-selected) — see adjudications.md")
     if state.get("now_term"):
         print(f"last on: {state['now_term']}")
     approved = state.get("approved", [])

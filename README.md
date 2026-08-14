@@ -66,6 +66,23 @@ hypelysis ./mystudy run --set roles.skeptic.model=claude-opus-5
 An API key is read from a file (`--api-key-file ~/.anthropic/key`), never taken on the
 command line where other processes could read it.
 
+### When the run reaches a choice it cannot make
+
+Some questions a study meets are the owner's: which of two readings of a counted term the
+document means, when the document itself is inconsistent. The run does not guess at these —
+but it does test them first. Each option is put to an adjudicator that tries to refute it
+against the document, independently, one worker per option. If every rival option is
+refuted, the choice was never really a choice: the run settles it, records why in
+`adjudications.md`, and continues. If more than one reading survives, the run stops and
+hands you the options with what was found for each.
+
+For unattended benchmarks, `--keep-going` tells the run to pick anyway — `best` (an arbiter
+chooses the reading the document best supports) or `random` (an arbitrary but reproducible
+pick among the survivors). A study run this way carries a decision its owner never made, so
+it is marked as such everywhere: the entry must declare it as open, `status` and the report
+name every such choice, and `adjudications.md` records the options and their tests. That is
+a benchmark's tradeoff, not a study's — a study of record needs its owner (RULES.md R4).
+
 ### A study is one reading, not the only one
 
 The workers are drawn fresh and they answer independently, so two runs over the same document

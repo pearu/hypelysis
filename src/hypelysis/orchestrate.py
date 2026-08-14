@@ -517,7 +517,7 @@ def phase_foundation(st: Study, lane: str):
         feedback = ""
         if term in resolutions:
             feedback = "OWNER DECISION (binding):\n" + resolutions.pop(term)
-        attempt, spent, faults = 0, 0, 0
+        attempt, spent, faults, adjudicated = 0, 0, 0, False
         while spent < budget:
             r = entry_round(st, term, feedback)
             worker_fault = any((r["verdicts"].get(k) or {}).get("worker_error")
@@ -563,6 +563,15 @@ def phase_foundation(st: Study, lane: str):
             feedback = (("CHAIR: " + ch.get("feedback", "")) if ch
                         else json.dumps({k: r["verdicts"][k] for k in r["failed"]}, indent=1))
             if r["decision"] == "escalate":
+                # Some escalations are not the owner's to make: test the
+                # options first, once per term, and continue if one stands.
+                if not adjudicated:
+                    adjudicated = True
+                    settled = adjudicate(st, term, r)
+                    if settled:
+                        feedback = "DECISION (binding):\n" + settled
+                        spent = 0
+                        continue
                 record_escalation(st, term, r)
                 queue.pop(0)
                 st.state[qkey] = queue
@@ -635,6 +644,87 @@ def apply_move(st: Study, prop: dict):
 def record_deferral(st: Study, term, prop):
     with open(os.path.join(st.out, "deferred.md"), "a") as f:
         f.write(f"- **{term}** — {prop.get('reasoning', '')}\n")
+
+
+def adjudicate(st: Study, term: str, r: dict):
+    """Test a chair's escalation before handing it to the owner.
+
+    The chair escalates when a choice looks like the owner's. Some of those
+    choices are not choices at all: all but one option is refuted by the
+    document itself, and the run can settle it with reasons. This stage lists
+    the options, tries to refute each one independently, and:
+
+      - one survivor, the rest refuted  -> adjudicated; the run continues
+      - several survive (or none)       -> the owner's call, unless keep_going
+
+    keep_going ('best' or 'random') is for unattended benchmarks: it picks
+    anyway and marks the study as carrying a choice its owner never made.
+    Returns a resolution string to re-queue the term with, or None to escalate.
+    """
+    chair = r.get("chair") or {}
+    if not (chair.get("choice") or "").strip():
+        return None
+    keep_going = st.cfg.get("keep_going")
+    opts = (st.call("options", st.role("options"),
+                    f"ESCALATION:\n{chair['choice']}") or {}).get("options") or []
+    opts = [o for o in opts if isinstance(o, str) and o.strip()]
+    if len(opts) < 2:
+        return None
+
+    rb = open(os.path.join(st.sandbox, "rulebook.md")).read()
+    doc = open(os.path.join(st.sandbox, "document.md")).read()
+    fnd_p = os.path.join(st.out, "foundation.md")
+    fnd = open(fnd_p).read() if os.path.exists(fnd_p) else "(empty)"
+    fnd = view_foundation(fnd, st.cfg.get("foundation_view"), term, st)
+    shared = (f"DOCUMENT UNDER STUDY:\n{doc}\n\nRULEBOOK:\n{rb}\n\n"
+              f"FOUNDATION:\n{fnd}\n\nCANDIDATE: {term}\n"
+              f"PROPOSED ENTRY:\n{(r.get('proposal') or {}).get('payload', '')}\n\n")
+    with ThreadPoolExecutor(len(opts)) as ex:
+        verdicts = list(ex.map(
+            lambda i: st.call("adjudicator", st.role("adjudicator"),
+                              f"{shared}OPTION UNDER TEST:\n{opts[i]}", draw=i),
+            range(len(opts))))
+    survived = [i for i, v in enumerate(verdicts)
+                if (v or {}).get("verdict") == "survives"]
+    tested = "\n".join(f"- {o} => {(v or {}).get('verdict', '?')}"
+                       f"{': ' + v['failing_case'] if (v or {}).get('failing_case') else ''}"
+                       for o, v in zip(opts, verdicts))
+
+    if len(survived) == 1:
+        pick, mode, why = survived[0], "adjudicated", "every rival option is refuted"
+    elif not keep_going:
+        return None
+    else:
+        pool = survived or list(range(len(opts)))
+        if keep_going == "random":
+            # arbitrary, but a function of the term and its options, so a
+            # replayed run makes the same arbitrary choice
+            seed = hashlib.sha256((term + "".join(opts)).encode()).hexdigest()
+            pick = pool[int(seed, 16) % len(pool)]
+            why = "picked arbitrarily among the readings that survived refutation"
+        else:
+            a = st.call("arbiter", st.role("arbiter"),
+                        f"{shared}OPTIONS AND WHAT THE ADJUDICATORS FOUND:\n{tested}\n\n"
+                        f"Choose among indices {pool}.") or {}
+            pick = a.get("pick") if a.get("pick") in pool else pool[0]
+            why = (a.get("why") or "")[:300]
+        mode = "machine-selected"
+
+    st.state.setdefault("machine_choices", []).append(
+        {"term": term, "mode": mode, "chosen": opts[pick], "why": why,
+         "options": opts, "verdicts": verdicts})
+    save(st.state_p, st.state)
+    with open(os.path.join(st.out, "adjudications.md"), "a") as f:
+        f.write(f"## {term} — {mode}\n\nChosen: {opts[pick]}\n\nWhy: {why}\n\n"
+                f"Options tested:\n{tested}\n\n")
+    if mode == "adjudicated":
+        return (f"ADJUDICATED (the run settled this; every rival reading is refuted by "
+                f"the document): {opts[pick]}\n\nOptions tested:\n{tested}")
+    return (f"MACHINE-SELECTED WITHOUT OWNER APPROVAL (the run was told to keep going): "
+            f"{opts[pick]}\nWhy: {why}\n\nOptions tested:\n{tested}\n\n"
+            f"Because no owner chose this, the entry must carry an Open clause saying "
+            f"that this reading was selected by the run and awaits the owner's "
+            f"confirmation.")
 
 
 def record_escalation(st: Study, term, last):

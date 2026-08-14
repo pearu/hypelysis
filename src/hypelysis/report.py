@@ -48,10 +48,15 @@ def gather(out: str) -> dict:
         attempts[d["term"]] = d["attempt"] + 1
         outcome[d["term"]] = d["decision"]
 
+    state = {}
+    sp = os.path.join(out, "state.json")
+    if os.path.exists(sp):
+        state = json.load(open(sp))
     invocations = rows("invocations.jsonl")
     runs = [r for r in invocations if r.get("command") == "run"]
     latest = runs[-1] if runs else (invocations[-1] if invocations else None)
-    return {"study": out, "calls": calls, "by_role": by_role, "costs": costs,
+    return {"study": out, "machine_choices": state.get("machine_choices") or [],
+            "calls": calls, "by_role": by_role, "costs": costs,
             "toks": toks, "outcome": outcome, "attempts": attempts,
             "code": latest, "settings": (latest or {}).get("settings") or {},
             "versions": {provenance.describe(r) for r in runs}}
@@ -132,6 +137,12 @@ def text(data: dict) -> str:
                        "cache-w", "cache-r", "cost"], rows)
         lines += body[:-1] + ["  " + "-" * (len(body[0]) - 2), body[-1]]
 
+    unowned = [m for m in data["machine_choices"] if m["mode"] == "machine-selected"]
+    if unowned:
+        lines += ["", f"WARNING: {len(unowned)} owner-level choice(s) were made by the "
+                  "run itself,", "         not by the study owner (--keep-going); see "
+                  "adjudications.md:"]
+        lines += [f"           {m['term']}: {m['chosen'][:60]}" for m in unowned]
     if data["outcome"]:
         tally = defaultdict(int)
         for v in data["outcome"].values():
@@ -156,6 +167,12 @@ def markdown(data: dict) -> str:
         lines += ["", f"**This study was advanced by {len(data['versions'])} different "
                   "versions of the code**; see log/invocations.jsonl before comparing its "
                   "numbers with another study's."]
+    unowned = [m for m in data["machine_choices"] if m["mode"] == "machine-selected"]
+    if unowned:
+        lines += ["", f"**{len(unowned)} owner-level choice(s) in this study were made by "
+                  "the run, not by its owner** (`--keep-going`); see adjudications.md.", ""]
+        for m in unowned:
+            lines.append(f"- {m['term']}: {m['chosen']}")
     lines += ["", "## Worker calls", "",
               "| role | calls | total s | mean s | max s | out tok | cache-w | cache-r | cost $ |",
               "|---|---|---|---|---|---|---|---|---|"]

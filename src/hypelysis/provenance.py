@@ -42,7 +42,7 @@ def settings(cfg: dict) -> dict:
     """The settings that shape what a run costs and produces, flattened for
     the record: the rest of the config is plumbing."""
     keep = ("prompt_packaging", "foundation_view", "note_cap", "retry_budget",
-            "extractors", "proposer_mode", "max_calls_per_run")
+            "extractors", "proposer_mode", "max_calls_per_run", "keep_going")
     out = {k: cfg[k] for k in keep if k in cfg}
     models = {}
     default = (cfg.get("default") or {}).get("model")

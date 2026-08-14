@@ -18,6 +18,14 @@
    "provider": "claude-cli",
    "model": "claude-opus-5",
    "effort": "high"
+  },
+  "adjudicator": {
+   "provider": "claude-cli",
+   "model": "claude-opus-5"
+  },
+  "arbiter": {
+   "provider": "claude-cli",
+   "model": "claude-opus-5"
   }
  },
  "extractors": 3,
