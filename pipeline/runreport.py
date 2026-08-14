@@ -26,18 +26,25 @@ for c in calls:
     by_role[c["role"].split(":")[0]].append(c["seconds"])
 
 costs = defaultdict(float)
+toks = defaultdict(lambda: defaultdict(int))
 for c in calls:
     m = c.get("meta") or {}
+    r = c["role"].split(":")[0]
     if m.get("cost_usd"):
-        costs[c["role"].split(":")[0]] += m["cost_usd"]
+        costs[r] += m["cost_usd"]
+    for k in ("input_tokens", "cache_read_tokens", "cache_write_tokens", "output_tokens"):
+        toks[r][k] += m.get(k) or 0
 lines = ["# Run report", "", f"Study: `{out}`", "", "## Worker calls", "",
-         "| role | calls | total s | mean s | max s | cost $ |", "|---|---|---|---|---|---|"]
+         "| role | calls | total s | mean s | max s | out tok | cache-w | cache-r | cost $ |",
+         "|---|---|---|---|---|---|---|---|---|"]
 total, total_cost = 0.0, 0.0
 for role, secs in sorted(by_role.items()):
     total += sum(secs)
     total_cost += costs.get(role, 0.0)
+    t = toks[role]
     lines.append(f"| {role} | {len(secs)} | {sum(secs):.0f} | "
-                 f"{sum(secs)/len(secs):.0f} | {max(secs):.0f} | {costs.get(role, 0.0):.2f} |")
+                 f"{sum(secs)/len(secs):.0f} | {max(secs):.0f} | {t['output_tokens']} | "
+                 f"{t['cache_write_tokens']} | {t['cache_read_tokens']} | {costs.get(role, 0.0):.2f} |")
 lines += ["", f"**{len(calls)} calls, {total:.0f}s total worker time, "
           f"${total_cost:.2f} recorded cost.**", ""]
 

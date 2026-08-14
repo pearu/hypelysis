@@ -28,7 +28,13 @@ Statement: <one to three sentences; for base, the assumed reading>
 Because: <base only — why leaving it unexplained is safe>
 Uses: <defined only — comma-separated earlier terms; or "everyday language only">
 Notation: <optional — the statement in symbols; an aid, never the meaning>
-Note: <optional — what the entry deliberately excludes or leaves open>
+Defers: <optional — one clause per document-loaded word used here without an entry: the word,
+        and the future need that would justify one; semicolon-separated>
+Open: <optional — one clause per question the entry deliberately leaves unsettled or excludes;
+      semicolon-separated>
+Finding: <optional — one clause per fact about the document this entry surfaces;
+         semicolon-separated>
+Note: <optional — residual commentary none of the fields above can carry>
 ```
 
 A **Given** names the things an entry is relative to, so the Statement can refer to them by
@@ -38,17 +44,31 @@ Statement disagree, the Statement governs — the notation is wrong. Every symbo
 device a notation uses is declared in a notation table in the foundation before first use;
 nothing is smuggled.
 
+**Defers**, **Open**, and **Finding** are declaration fields: each holds telegraphic clauses
+("`<field>: <sequence of words>`"), semicolon-separated, not essay sentences — a clause states
+the declaration and, where one exists, its trigger or source, and nothing else. A clause in
+Open or Defers is a decision made visible: a check that restates one is describing the entry,
+not objecting to it. An openness inherited from an earlier entry is a clause naming its source
+("inherited from 'custody horizon'"), not a re-argument. A later entry that *needs* a deferred
+meaning is still incomplete (rule 1) — deferral shields the declaring entry, never its
+dependents.
+
 ## Discipline
 
-1. **A word is an entry, base, or everyday.** If a proposed statement leans on a technical
-   word that is none of these, the proposal is incomplete.
+1. **A word is an entry, base, or everyday — and everyday language is the medium, not a
+   dependency.** Every statement is written in words that will never all be entries; that is
+   how language works, not a defect. A word needs an entry only when the DOCUMENT loads it —
+   its coinages, its counted units, the words carrying its argument. Domain vocabulary used
+   in its ordinary sense ("schema", "value", "named") is the medium. If a statement leans on
+   a word the document loads and no entry supplies, the proposal is incomplete.
 2. **Names are claims.** A term's name must not promise more than its statement delivers.
    When it does, choose a plainer name and record the document's word in a Note.
 3. **Prefer defining over declaring base** — but a base term is the right choice when every
    candidate definition introduces more unexplained words than it removes, or when the plain
    reading is more reliably shared than any construction.
 4. **Defer with a reason.** When a term is not yet needed, do not add it; record what future
-   need would justify it.
+   need would justify it. At entry level, that record is a Defers clause: the word, and the
+   need that would call for its entry.
 5. **Changes are logged.** Any revision to an existing entry must not contradict the entries
    that came before it, and every entry after it must be re-checked. Keep rejected changes on
    record with the reason they failed.

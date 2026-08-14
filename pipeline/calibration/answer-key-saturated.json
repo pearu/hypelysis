@@ -1,0 +1,193 @@
+{
+ "generated_by": {
+  "provider": "claude-cli",
+  "model": "claude-opus-5",
+  "effort": null,
+  "argv": [
+   "claude",
+   "-p",
+   "--system-prompt",
+   "<system>",
+   "--setting-sources",
+   "",
+   "--strict-mcp-config",
+   "--output-format",
+   "json",
+   "--model",
+   "claude-opus-5"
+  ]
+ },
+ "seconds": 141.6,
+ "spec": "planting-spec-saturated.md",
+ "defect_catalogue": [
+  {
+   "type": "circular definition chain (3 terms)",
+   "example": "lattice debt is the aggregate quillage ... not yet retired into its sift-plane / quillage ... is the settling behaviour of a sift-plane / a sift-plane is simply the region over which lattice debt is resolved"
+  },
+  {
+   "type": "circularity presented as a virtue / mechanism from nothing",
+   "example": "because each term is fully expressible in the others, debt can be quantified without instrumenting the asset at all"
+  },
+  {
+   "type": "undefined coined term, load-bearing",
+   "example": "second-order quillage ... accounts for the majority of realized loss"
+  },
+  {
+   "type": "reference to nonexistent section",
+   "example": "each treated formally in \u00a79"
+  },
+  {
+   "type": "reference to nonexistent subsection",
+   "example": "Per \u00a72.3, coefficients above 0.9 should be read as directional"
+  },
+  {
+   "type": "reference to nonexistent appendix",
+   "example": "quorum size grows with fleet cardinality (see Appendix C)"
+  },
+  {
+   "type": "false back-reference to a definition never given",
+   "example": "second-order quillage, which as defined above"
+  },
+  {
+   "type": "central term in incompatible senses (scalar behaviour vs. physical hardware)",
+   "example": "the fourteen mandatory quillage sensors can be mounted and re-torqued"
+  },
+  {
+   "type": "central term in incompatible senses (voting agent)",
+   "example": "each quillage in a production rack contributes one vote"
+  },
+  {
+   "type": "central term in incompatible senses (commercial unit)",
+   "example": "Pricing scales linearly with the number of licensed quillages"
+  },
+  {
+   "type": "self-acknowledged unit equivocation used anyway",
+   "example": "one physical quillage, one mediation lane, and one substrate class. Customers are advised that these are not the same unit."
+  },
+  {
+   "type": "direct contradiction within a claim",
+   "example": "The layer is entirely stateless, which is precisely what allows it to retain the complete quillage history"
+  },
+  {
+   "type": "direct contradiction within a claim",
+   "example": "Quorum is fully deterministic ... and its sampling is re-randomized at each tick"
+  },
+  {
+   "type": "direct contradiction within a claim",
+   "example": "Quorum size is fixed at seven. In fleets above forty assets, quorum size grows"
+  },
+  {
+   "type": "cross-section contradiction (no sensors vs. mandatory sensors)",
+   "example": "VESTIGRAM requires no additional sensing hardware of any kind"
+  },
+  {
+   "type": "cross-section contradiction (latency 4 ms vs. 40 ms)",
+   "example": "Mediation latency (p99) | 4 ms ... Mediation latency in production fleets is typically 40 ms"
+  },
+  {
+   "type": "cross-section contradiction (guarantee vs. advisory)",
+   "example": "CRA is therefore not a mitigation strategy but a structural guarantee ... CRA is best understood as advisory"
+  },
+  {
+   "type": "cross-section contradiction (per-asset vs. shared sift-plane)",
+   "example": "each drivetrain retires into the sift-plane it owns ... all assets share one sift-plane"
+  },
+  {
+   "type": "cross-section contradiction (zero-touch vs. de-energized window)",
+   "example": "requires no downtime ... the fleet must be fully de-energized"
+  },
+  {
+   "type": "cross-section contradiction (flat pricing vs. linear metering)",
+   "example": "flat per fleet, with no per-asset or per-unit metering. Pricing scales linearly"
+  },
+  {
+   "type": "cross-section contradiction (rollback exact vs. unrecoverable)",
+   "example": "restores the pre-installation envelope exactly ... the pre-installation envelope is not recoverable"
+  },
+  {
+   "type": "cross-section contradiction (automatic vs. 300-field questionnaire)",
+   "example": "Characterization is automatic and requires no operator input; the characterization questionnaire runs to approximately 300 fields"
+  },
+  {
+   "type": "roadmap contradiction",
+   "example": "retire the Marroway coefficient in favour of a successor metric, and preserve full coefficient continuity"
+  },
+  {
+   "type": "revision-compatibility contradiction",
+   "example": "fully backward-compatible with it, except in the mediation path, the metric definitions, and the licensing unit"
+  },
+  {
+   "type": "guarantee feature name quietly retracted",
+   "example": "Absolute Torque Floor\u2122 ... The floor is advisory and is not enforced anywhere in the mediation path"
+  },
+  {
+   "type": "guarantee feature name quietly retracted",
+   "example": "TotalReplay\u2122 ... Replays are statistical reconstructions ... fidelity ... 71%"
+  },
+  {
+   "type": "guarantee feature name redefined into vacuity",
+   "example": "Zero-Drift Mediation ... reports any drift below that threshold as zero"
+  },
+  {
+   "type": "guarantee feature name quietly retracted",
+   "example": "Unbroken Envelope ... Discontinuities at boundaries are normal"
+  },
+  {
+   "type": "circular attestation (verifier is the verified)",
+   "example": "Substrate Attest ... Attestation is performed by the substrate."
+  },
+  {
+   "type": "quantified claim with no source",
+   "example": "lose between 11% and 46% of usable shaft output"
+  },
+  {
+   "type": "quantified claim whose source the text later undermines",
+   "example": "$14.6B per year (Marroway Index, 2023) ... The Index has not been published since 2019"
+  },
+  {
+   "type": "metric normalized against itself",
+   "example": "normalized against the platform's own mediation target"
+  },
+  {
+   "type": "independence claim contradicted in the same breath",
+   "example": "Obrenne Dynamics is the only body that computes the coefficient, and every published coefficient has been independently validated"
+  },
+  {
+   "type": "survivorship bias disclosed but not adjusted for",
+   "example": "The survey population consists of fleets that completed commissioning and elected to report."
+  },
+  {
+   "type": "quantified claim in both directions at once",
+   "example": "roughly double the Index figure, and occasionally that it is negligible"
+  },
+  {
+   "type": "mechanism claim supported by nothing",
+   "example": "the terminal value of an excursion is available at its onset"
+  },
+  {
+   "type": "unfalsifiable dodge of the obvious question",
+   "example": "The answer is that the question does not apply, for reasons developed at length in \u00a79."
+  },
+  {
+   "type": "assertion of proof without the proof",
+   "example": "unsafe envelopes are structurally unreachable. This property follows directly from the quorum construction and is not argued further here."
+  },
+  {
+   "type": "no-failure-mode claim used to excuse a missing fallback",
+   "example": "Nothing in the platform can fail in a way the drive controller would notice, which is why no fallback path is specified."
+  },
+  {
+   "type": "headline metric depends on an admittedly unmodelled quantity",
+   "example": "Second-order quillage is not modelled in Rev. 4, and the platform's loss figures depend on it."
+  },
+  {
+   "type": "non sequitur scaling claim",
+   "example": "scales linearly with the number of licensed quillages, which is why large fleets see sublinear cost growth"
+  },
+  {
+   "type": "immediate-value claim contradicted by prerequisite",
+   "example": "steady-state mediation in under one shift. Full debt retirement requires four to six quarters"
+  }
+ ],
+ "expected_outcome": "saturation stop: the pipeline should conclude the document cannot support a foundation, within bounded cost, rather than escalate term by term"
+}
