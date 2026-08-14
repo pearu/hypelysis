@@ -46,10 +46,12 @@ def gather(out: str) -> dict:
         for k in TOKEN_KEYS:
             toks[role][k] += m.get(k) or 0
 
+    decisions = rows("decisions.jsonl")
     outcome, attempts = {}, {}
-    for d in rows("decisions.jsonl"):
+    for d in decisions:
         attempts[d["term"]] = d["attempt"] + 1
         outcome[d["term"]] = d["decision"]
+    timing = term_times(calls, decisions)
 
     state = {}
     sp = os.path.join(out, "state.json")
@@ -68,8 +70,48 @@ def gather(out: str) -> dict:
             "phase": state.get("phase"),
             "calls": calls, "by_role": by_role, "costs": costs,
             "toks": toks, "outcome": outcome, "attempts": attempts,
+            "timing": timing,
             "code": latest, "settings": (latest or {}).get("settings") or {},
             "versions": {provenance.describe(r) for r in runs}}
+
+
+def term_times(calls: list, decisions: list) -> dict:
+    """How long each term took, recovered from the call log.
+
+    Calls do not name their term, but each attempt begins with the proposer
+    and ends with the decision that was logged for it, so splitting the calls
+    at proposer boundaries lines them up with the decisions in order. Where
+    the calls carry timestamps the answer is wall time, which is what a term
+    actually cost while parallel workers ran; older logs have only per-call
+    durations, and those sum to worker time instead — marked with a leading ~.
+    """
+    chunks, current = [], None
+    for c in calls:
+        if c.get("cache_hit"):
+            continue
+        if c["role"].split(":")[0] == "proposer":
+            if current is not None:
+                chunks.append(current)
+            current = []
+        if current is not None:
+            current.append(c)
+    if current:
+        chunks.append(current)
+
+    out = {}
+    for chunk, d in zip(chunks, decisions):
+        # a timestamp of zero is a timestamp: test for absence, not truth
+        stamped = [c for c in chunk if c.get("at") is not None]
+        wall = (max(c["at"] + c["seconds"] for c in stamped)
+                - min(c["at"] for c in stamped)) if stamped else None
+        worker = sum(c.get("seconds") or 0 for c in chunk)
+        got = out.setdefault(d["term"], {"wall": 0.0, "worker": 0.0, "exact": True})
+        got["worker"] += worker
+        if wall is None:
+            got["exact"] = False
+        else:
+            got["wall"] += wall
+    return out
 
 
 def _tokens(n: int) -> str:
@@ -121,6 +163,13 @@ def _terms(data: dict) -> str:
     elif cands and data["outcome"]:
         bits.append("queue empty")
     return "; ".join(bits)
+
+
+def _term_time(data: dict, term: str) -> str:
+    got = data["timing"].get(term)
+    if not got:
+        return ""
+    return ("" if got["exact"] else "~") + _dur(got["wall"] if got["exact"] else got["worker"])
 
 
 def _table(headers, rows, aligns=None, indent="  ") -> list:
@@ -189,10 +238,12 @@ def text(data: dict) -> str:
             tally[v] += 1
         lines += ["", f"decisions — {len(data['outcome'])} terms: " +
                   ", ".join(f"{v} {k}" for k, v in sorted(tally.items()))]
-        lines += _table(["term", "attempts", "outcome"],
-                        [[t, data["attempts"][t], data["outcome"][t]]
+        lines += _table(["term", "attempts", "time", "outcome"],
+                        [[t, data["attempts"][t], _term_time(data, t), data["outcome"][t]]
                          for t in data["outcome"]],
-                        aligns=["<", ">", "<"])
+                        aligns=["<", ">", ">", "<"])
+        if any(not data["timing"].get(t, {}).get("exact", True) for t in data["outcome"]):
+            lines.append("  ~ worker time; this run predates call timestamps")
     return "\n".join(lines) + "\n"
 
 
@@ -236,9 +287,14 @@ def markdown(data: dict) -> str:
         lines += ["## Decisions", "",
                   f"terms processed: {len(data['outcome'])} — " +
                   ", ".join(f"{k}: {v}" for k, v in sorted(counts.items())), "",
-                  "| term | attempts | outcome |", "|---|---|---|"]
+                  "| term | attempts | time s | outcome |", "|---|---|---|---|"]
         for t in data["outcome"]:
-            lines.append(f"| {t} | {data['attempts'][t]} | {data['outcome'][t]} |")
+            got = data["timing"].get(t) or {}
+            secs = got.get("wall") if got.get("exact") else got.get("worker")
+            lines.append(f"| {t} | {data['attempts'][t]} | "
+                         f"{'' if secs is None else round(secs)}"
+                         f"{'' if got.get('exact', True) else ' (worker)'} | "
+                         f"{data['outcome'][t]} |")
         lines.append("")
     return "\n".join(lines)
 

@@ -343,3 +343,46 @@ class TestTermCounts(unittest.TestCase):
         self.assertIn("terms     3 candidates", shown)
         self.assertIn("Terms: 3 candidates",
                       open(os.path.join(self.study, "RUN-REPORT.md")).read())
+
+
+class TestTermTiming(unittest.TestCase):
+    """How long each term took, recovered from the call log."""
+
+    def calls(self, *specs):
+        return [dict(role=r, at=at, seconds=s) for r, at, s in specs]
+
+    def test_attempts_line_up_with_decisions_at_proposer_boundaries(self):
+        calls = self.calls(("extractor", 100.0, 5.0),          # before any term
+                           ("proposer", 200.0, 10.0),          # widget, attempt 0
+                           ("skeptic", 210.0, 20.0),
+                           ("proposer", 300.0, 10.0),          # widget, attempt 1
+                           ("chair", 310.0, 5.0),
+                           ("proposer", 400.0, 10.0),          # gadget
+                           ("chair", 410.0, 30.0))
+        decisions = [{"term": "widget", "decision": "retry"},
+                     {"term": "widget", "decision": "accept"},
+                     {"term": "gadget", "decision": "accept"}]
+        t = report.term_times(calls, decisions)
+        self.assertEqual(t["widget"]["wall"], 30.0 + 15.0)   # both attempts
+        self.assertEqual(t["gadget"]["wall"], 40.0)
+        self.assertTrue(t["widget"]["exact"])
+
+    def test_wall_time_counts_parallel_workers_once(self):
+        calls = self.calls(("proposer", 0.0, 10.0), ("skeptic", 10.0, 30.0),
+                           ("reader", 10.0, 30.0), ("chair", 40.0, 5.0))
+        t = report.term_times(calls, [{"term": "widget", "decision": "accept"}])
+        self.assertEqual(t["widget"]["wall"], 45.0)          # not the 75s of worker time
+        self.assertEqual(t["widget"]["worker"], 75.0)
+
+    def test_a_log_without_timestamps_reports_worker_time_and_says_so(self):
+        calls = [{"role": "proposer", "seconds": 10.0}, {"role": "chair", "seconds": 5.0}]
+        t = report.term_times(calls, [{"term": "widget", "decision": "accept"}])
+        self.assertFalse(t["widget"]["exact"])
+        self.assertEqual(t["widget"]["worker"], 15.0)
+
+    def test_cached_calls_cost_no_time(self):
+        calls = [{"role": "proposer", "at": 0.0, "seconds": 10.0},
+                 {"role": "skeptic", "cache_hit": True, "seconds": 0.0},
+                 {"role": "chair", "at": 10.0, "seconds": 5.0}]
+        t = report.term_times(calls, [{"term": "widget", "decision": "accept"}])
+        self.assertEqual(t["widget"]["wall"], 15.0)
