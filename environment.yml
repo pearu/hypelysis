@@ -1,0 +1,15 @@
+# The development environment, so a study's requirements live with the study
+# rather than in whatever interpreter happens to be on PATH:
+#
+#     mamba env create -f environment.yml
+#     mamba activate hypelysis
+#     pip install -e .
+#
+# hypelysis itself needs nothing but the standard library; the AI it drives is
+# an external tool (the `claude` CLI on PATH, or an HTTP endpoint).
+name: hypelysis
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13
+  - pip

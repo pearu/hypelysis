@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: tests (python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      # Installed, not run from the source tree: this is also the check that
+      # the rulebook and role prompts really ship as package data.
+      - run: python -m pip install --upgrade pip
+      - run: pip install .
+      - name: the method's materials ship with the package
+        run: |
+          python -c "
+          from hypelysis import resources
+          assert '### <term>' in resources.rulebook(), 'rulebook missing from the wheel'
+          for role in ('proposer','skeptic','reader','groundedness','minimality','chair','extractor','merger','implementer'):
+              assert resources.role(role).strip(), role
+          assert resources.default_config()['default']['model']
+          print('rulebook, 9 role prompts, and the default config all present')
+          "
+      # No provider is reachable here and nothing is spent: the run path is
+      # replayed from fixtures recorded off a real run.
+      - name: tests
+        run: python -m unittest discover -s tests -v
+
+  house-checks:
+    name: ledger integrity and worked examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: ledger integrity — citations, numbering, entry format
+        run: python tools/check.py
+      - name: the theory's own test suite, by hand-sized example
+        run: python studies/inthub-whitepaper/examples.py

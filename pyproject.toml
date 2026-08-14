@@ -7,7 +7,7 @@ name = "hypelysis"
 version = "0.1.0"
 description = "Read a document on its merits: a checked run that settles what its terms mean before its claims are examined"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [{ name = "Pearu Peterson" }]
 dependencies = []

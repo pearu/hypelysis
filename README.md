@@ -1,5 +1,7 @@
 # hypelysis
 
+[![CI](https://github.com/pearu/hypelysis/actions/workflows/ci.yml/badge.svg)](https://github.com/pearu/hypelysis/actions/workflows/ci.yml)
+
 *hype + lysis. Analysis is Greek for "dissolving apart"; hypelysis is that, applied to hype.*
 
 A method for reading hyped technical documents — AI whitepapers, architecture manifestos — by
@@ -37,7 +39,9 @@ studies/       one directory per document studied
 ## The automated method
 
 ```
-pip install -e .                              # or: pip install hypelysis
+mamba env create -f environment.yml           # python 3.13; the package needs
+mamba activate hypelysis                      # nothing but the standard library
+pip install -e .
 
 hypelysis ./mystudy init paper.md             # create the study from a document
 hypelysis ./mystudy run                       # advance to the next owner gate
