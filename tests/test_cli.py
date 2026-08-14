@@ -11,7 +11,7 @@ import shutil
 import tempfile
 import unittest
 
-from hypelysis import cli, orchestrate, resources
+from hypelysis import cli, orchestrate, report, resources
 from hypelysis.check import check_text
 
 DOC = "# Widget Paper\n\nA widget is priced per gadget. Gadgets are counted daily.\n"
@@ -257,3 +257,47 @@ class TestViews(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestReportRendering(unittest.TestCase):
+    """The file keeps exact numbers; the terminal gets columns and human units."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.study = os.path.join(self.dir, "study")
+        cli.main([self.study, "init", os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "fixtures", "sprocket.md")])
+        with open(os.path.join(self.study, "log", "rounds.jsonl"), "w") as f:
+            for role, secs, out_tok, cost in (("proposer", 4500.0, 2_500_000, 12.5),
+                                              ("skeptic", 42.0, 1500, 0.25)):
+                f.write(json.dumps({"role": role, "seconds": secs,
+                                    "meta": {"cost_usd": cost, "output_tokens": out_tok,
+                                             "cache_write_tokens": 0,
+                                             "cache_read_tokens": 0}}) + "\n")
+        with open(os.path.join(self.study, "log", "decisions.jsonl"), "w") as f:
+            f.write(json.dumps({"term": "widget", "attempt": 1,
+                                "decision": "accept"}) + "\n")
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def test_the_terminal_rendering_uses_human_units(self):
+        shown = report.build(self.study)
+        self.assertIn("1.2h", shown)      # 4500 seconds
+        self.assertIn("2.50M", shown)     # 2,500,000 output tokens
+        self.assertIn("$12.75", shown)    # both calls' cost
+
+    def test_the_terminal_columns_line_up(self):
+        shown = report.build(self.study)
+        body = [l for l in shown.splitlines() if l.startswith("  ") and "s" in l]
+        widths = {len(l.rstrip()) for l in body if not l.strip().startswith("-")}
+        self.assertTrue(all(l == l.rstrip() for l in shown.splitlines()),
+                        "no line may carry trailing padding")
+        self.assertGreater(len(body), 2)
+        self.assertLessEqual(max(widths) - min(widths), 60)
+
+    def test_the_file_keeps_the_exact_numbers(self):
+        report.build(self.study)
+        filed = open(os.path.join(self.study, "RUN-REPORT.md")).read()
+        self.assertIn("| proposer | 1 | 4500 |", filed)
+        self.assertIn("2500000", filed)

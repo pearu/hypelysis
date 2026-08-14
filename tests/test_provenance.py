@@ -109,8 +109,10 @@ class TestStamping(unittest.TestCase):
 
     def test_status_and_report_name_the_code(self):
         cli.main([self.study, "init", DOC])
-        text = cli.report_mod.build(self.study)
-        self.assertIn("Code: hypelysis", text)
+        shown = cli.report_mod.build(self.study)          # terminal rendering
+        self.assertIn("code      hypelysis", shown)
+        filed = open(os.path.join(self.study, "RUN-REPORT.md")).read()
+        self.assertIn("Code: hypelysis", filed)           # the file is the record
 
     def test_a_study_advanced_by_two_versions_says_so(self):
         cli.main([self.study, "init", DOC])
