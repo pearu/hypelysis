@@ -208,8 +208,12 @@ def phase_extract(st: Study):
     rb = open(os.path.join(st.sandbox, "rulebook.md")).read()
     n = st.cfg.get("extractors", 3)
     with ThreadPoolExecutor(n) as ex:
+        # draw=i keeps these independent: the extractors receive one identical
+        # prompt, so without it they share a cache key and the second and third
+        # draws return the first one's answer — whenever a call lands before its
+        # siblings start, and always on a resumed run.
         outs = list(ex.map(lambda i: st.call("extractor", st.role("extractor"),
-                    f"RULEBOOK:\n{rb}\n\nDOCUMENT:\n{doc}"), range(n)))
+                    f"RULEBOOK:\n{rb}\n\nDOCUMENT:\n{doc}", draw=i), range(n)))
     merged, seen = [], set()
     for out in outs:
         for t in out.get("terms", []):

@@ -91,10 +91,17 @@ class TestReplayedExtraction(ReplayStudy):
         self.assertIn("$0.00", cli.report_mod.build(self.study))
 
     def test_the_recorded_draws_stay_distinct(self):
-        """Three extractors draw independently; replay must not collapse them
-        into one answer, or the merge would see a third of the candidates."""
+        """Three extractors draw independently on one identical prompt. Each
+        must be a real call with its own answer: served from the call cache
+        instead, the three would collapse to one draw and the merge would see a
+        third of the candidates. A fast provider makes that collapse likely —
+        the first call returns before its siblings start — so this is where it
+        gets caught."""
         self.run_to_gate()
-        outputs = [r["output"] for r in self.log("rounds.jsonl") if r["role"] == "extractor"]
+        rounds = self.log("rounds.jsonl")
+        self.assertEqual([r.get("cache_hit") for r in rounds].count(True), 0,
+                         "an extractor draw was served from the call cache")
+        outputs = [r["output"] for r in rounds if r["role"] == "extractor"]
         self.assertEqual(len(set(outputs)), 3)
 
 
