@@ -18,6 +18,7 @@ import os
 import sys
 import time
 
+import difflib
 import hashlib
 from . import providers
 from . import resources
@@ -34,6 +35,11 @@ READER_PROFILES = ["a careful reader whose first language is not English",
                    "a software engineer who will implement what the text describes",
                    "a mathematician who expects statements to be precise"]
 MILESTONES = ["extraction", "foundation-lane1", "foundation-lane2", "report"]
+# A verdict that binds an actor must travel with grounds enough to act on, or
+# it must not bind. What a decision settles is a proposition; the words it
+# arrived in are not part of it, and a proposer told otherwise transcribes them
+# into a Statement the format then rejects.
+DECISION_BINDS_THE_READING = '\\n\\nThis decision fixes the READING: the proposition above is settled. It does not fix any wording. Draft the entry as the rulebook requires, expressing this reading; where the decision mentions record-keeping (openness, findings), that is your judgment to place, not text to transcribe.'
 
 
 # ------------------------------------------------------------------ plumbing
@@ -394,7 +400,18 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
         payload = json.dumps(payload, indent=1)
     verdicts["rules"] = rules_check(
         st, fnd + "\n\n" + payload if prop["move"] == "entry" else payload)
-    if verdicts["rules"]["verdict"] != "ok":
+    history = attempt_history(st, term)
+    # A mechanical failure is cheap to re-draft, so it short-circuits the round
+    # — but the same mechanical objection twice running means the proposer
+    # cannot see something, and that is a judgement, not a retry. The second
+    # one promotes the round: the checks run and the chair, seeing what has
+    # already been tried, owns the loop.
+    promoted = bool(
+        verdicts["rules"]["verdict"] != "ok" and history
+        and history[-1].get("failed") == ["rules"]
+        and ((history[-1].get("verdicts") or {}).get("rules") or {}).get("objections")
+        == verdicts["rules"]["objections"])
+    if verdicts["rules"]["verdict"] != "ok" and not promoted:
         return {"decision": "retry", "failed": ["rules"], "proposal": prop,
                 "verdicts": verdicts}
     tail = (f"PROPOSAL:\n{payload}\n\n"
@@ -446,7 +463,7 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
     bad = [k for k, v in verdicts.items() if v.get("verdict") != "ok"]
     if not bad:
         return {"decision": "accept", "failed": [], "proposal": prop, "verdicts": verdicts}
-    if "rules" in bad:   # the mechanical check is absolute; no chair can overrule it
+    if "rules" in bad and not promoted:   # mechanical: no chair can overrule it
         return {"decision": "retry", "failed": bad, "proposal": prop, "verdicts": verdicts}
     # replicate failed AI checks once, blind: an objection that recurs across
     # independent draws is signal; one that does not is possibly draw noise
@@ -460,7 +477,11 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
             verdicts[c] = {"sample_1": verdicts[c], "sample_2_blind": rep,
                            "verdict": verdicts[c]["verdict"]}
     chair_tail = (f"PROPOSAL:\n{payload}\n\n"
-                  f"REVIEWER VERDICTS:\n{json.dumps(verdicts, indent=1)[:12000]}")
+                  + render_trajectory(history)
+                  + (("THIS ATTEMPT REPEATS A MECHANICAL FAILURE the proposer could not "
+                      "clear on its own; say what to do differently, or escalate.\n\n")
+                     if promoted else "")
+                  + f"REVIEWER VERDICTS:\n{render_verdicts(verdicts)}")
     chair_sid = st.primer(shared, "chair") \
         if st.cfg.get("prompt_packaging") == "session-primer" else None
     if chair_sid:
@@ -562,7 +583,7 @@ def phase_foundation(st: Study, lane: str):
             ch = r.get("chair")
             detail = (("CHAIR: " + ch.get("feedback", "")) if ch
                       else json.dumps({k: r["verdicts"][k] for k in r["failed"]}, indent=1))
-            feedback = rejected_draft(r) + detail
+            feedback = rejected_draft(st, r) + detail
             if r["decision"] == "escalate":
                 # Some escalations are not the owner's to make: test the
                 # options first, once per term, and continue if one stands.
@@ -647,7 +668,114 @@ def record_deferral(st: Study, term, prop):
         f.write(f"- **{term}** — {prop.get('reasoning', '')}\n")
 
 
-def rejected_draft(r: dict) -> str:
+def attempt_history(st: Study, term: str, keep: int = 5) -> list:
+    """What has already been tried on this term, from the decision log."""
+    p = os.path.join(st.out, "log", "decisions.jsonl")
+    if not os.path.exists(p):
+        return []
+    out = []
+    for line in open(p):
+        if not line.strip():
+            continue
+        d = json.loads(line)
+        if d.get("term") == term:
+            out.append(d)
+    return out[-keep:]
+
+
+def one_line(o, width: int = 160) -> str:
+    """An objection as one line: what it says, not how it is wrapped."""
+    if isinstance(o, dict):
+        text = o.get("defect") or o.get("failing_case") or o.get("why") or json.dumps(o)
+        if o.get("failing_case") and o.get("defect"):
+            text += f" — failing case: {o['failing_case']}"
+        if o.get("severity"):
+            text += f" [{o['severity']}]"
+    else:
+        text = str(o)
+    text = " ".join(str(text).split())
+    return text if len(text) <= width else text[:width - 1] + "…"
+
+
+def render_trajectory(history: list) -> str:
+    """The term's earlier attempts, so a chair can see a loop rather than
+    judging each attempt as if it were the first."""
+    if not history:
+        return ""
+    lines = ["THIS TERM'S EARLIER ATTEMPTS:"]
+    for d in history:
+        failed = ",".join(d.get("failed") or []) or "nothing"
+        lines.append(f"- attempt {d.get('attempt')}: {d.get('decision')} "
+                     f"(failed: {failed})")
+        for role in (d.get("failed") or []):
+            v = (d.get("verdicts") or {}).get(role) or {}
+            samples = [v] + [x for k, x in v.items()
+                             if k.startswith("sample") and isinstance(x, dict)]
+            for sample in samples[:1]:
+                for o in (sample.get("objections") or [])[:2]:
+                    lines.append(f"    ({role}) {one_line(o, 120)}")
+        ch = d.get("chair") or {}
+        if ch.get("feedback"):
+            lines.append(f"    you told the proposer: {one_line(ch['feedback'], 200)}")
+    return "\n".join(lines) + "\n\n"
+
+
+def render_verdicts(verdicts: dict, limit: int = 20000) -> str:
+    """The reviewers' verdicts as the chair needs them: every objection kept,
+    identical objections across blind samples merged and marked as recurring,
+    and the JSON scaffolding that was most of the bulk removed.
+
+    The old rendering was a JSON dump cut at a fixed length, so a chair could
+    decide having never seen an objection, with nothing saying so. Anything
+    dropped here is counted and announced."""
+    lines, dropped = [], 0
+    for name, v in verdicts.items():
+        if not isinstance(v, dict):
+            continue
+        samples = {k: x for k, x in v.items()
+                   if k.startswith("sample") and isinstance(x, dict)}
+        lines.append(f"{name}: {v.get('verdict', '?')}"
+                     + (f" ({len(samples)} blind samples)" if samples else ""))
+        if samples:
+            seen = {}
+            for label, sample in samples.items():
+                for o in (sample.get("objections") or []):
+                    seen.setdefault(one_line(o, 400), []).append(label)
+            if len(samples) > 1:
+                lines.append("  (independent draws: they rarely word the same "
+                             "objection alike, so judge recurrence by substance — "
+                             "a label marks only where this exact text appeared)")
+            for text, labels in seen.items():
+                mark = ("[all samples]" if len(labels) == len(samples)
+                        else f"[{', '.join(sorted(labels))}]")
+                lines.append(f"  {mark} {text}")
+            continue
+        for o in (v.get("objections") or []):
+            lines.append(f"  - {one_line(o, 400)}")
+        if v.get("recommendation"):
+            lines.append(f"  recommendation: {v['recommendation']}")
+        if v.get("evidence"):
+            lines.append(f"  evidence: {one_line(v['evidence'], 400)}")
+        for r in (v.get("restatements") or []):
+            if r.get("restatement"):
+                lines.append(f"  - read as: {one_line(r['restatement'], 300)}")
+            for a in (r.get("ambiguous") or []):
+                lines.append(f"      ambiguous: {one_line(a, 300)}")
+    out = "\n".join(lines)
+    if len(out) > limit:
+        kept = []
+        for line in lines:
+            if len("\n".join(kept + [line])) > limit:
+                dropped += 1
+                continue
+            kept.append(line)
+        out = "\n".join(kept) + (
+            f"\n[{dropped} further objection line(s) omitted for length — "
+            "ask for a revision rather than deciding without them]")
+    return out
+
+
+def rejected_draft(st: Study, r: dict) -> str:
     """The draft a retry is about, quoted back to its author.
 
     A proposer is drawn fresh for every attempt and never sees what it wrote
@@ -657,9 +785,32 @@ def rejected_draft(r: dict) -> str:
     the whole foundation as their payload, which is already in the prompt, so
     only entry moves are quoted."""
     prop = r.get("proposal") or {}
-    if prop.get("move") != "entry" or not prop.get("payload"):
+    payload = prop.get("payload")
+    if not payload or not isinstance(payload, str):
         return ""
-    return f"YOUR PREVIOUS PROPOSAL, WHICH WAS REJECTED:\n{prop['payload']}\n\n"
+    if prop.get("move") == "entry":
+        return f"YOUR PREVIOUS PROPOSAL, WHICH WAS REJECTED:\n{payload}\n\n"
+    if prop.get("move") not in ("revision", "reorder"):
+        return ""
+    fnd_p = os.path.join(st.out, "foundation.md")
+    current = open(fnd_p).read() if os.path.exists(fnd_p) else ""
+    if prop["move"] == "reorder":
+        before = re.findall(r"^### (.+)$", current, re.M)
+        after = re.findall(r"^### (.+)$", payload, re.M)
+        moves = [f"{t}: position {before.index(t) + 1} -> {after.index(t) + 1}"
+                 for t in after if t in before and before.index(t) != after.index(t)]
+        return ("YOUR PREVIOUS REORDER, WHICH WAS REJECTED:\n"
+                + ("\n".join(moves) or "(no entry changed position)") + "\n\n")
+    diff = list(difflib.unified_diff(current.splitlines(), payload.splitlines(),
+                                     "foundation as it stands", "your revision",
+                                     lineterm="", n=1))
+    if len(diff) > 200:
+        return ("YOUR PREVIOUS REVISION WAS REJECTED, and it is too large to quote "
+                f"back ({len(diff)} changed lines). Rule 5 makes every entry after a "
+                "revised one a re-checking obligation, so a revision this wide is "
+                "hard to review and hard to trust: propose a smaller one.\n\n")
+    return ("YOUR PREVIOUS REVISION, WHICH WAS REJECTED (as a diff against the "
+            "foundation you were given):\n" + "\n".join(diff) + "\n\n")
 
 
 def adjudicate(st: Study, term: str, r: dict):
@@ -740,7 +891,7 @@ def adjudicate(st: Study, term: str, r: dict):
             f"{opts[pick]}\nWhy: {why}\n\nOptions tested:\n{tested}\n\n"
             f"Because no owner chose this, the entry must carry an Open clause saying "
             f"that this reading was selected by the run and awaits the owner's "
-            f"confirmation.")
+            f"confirmation." + DECISION_BINDS_THE_READING)
 
 
 def record_escalation(st: Study, term, last):

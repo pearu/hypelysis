@@ -475,15 +475,34 @@ class TestSettledFromState(unittest.TestCase):
 class TestRejectedDraftIsQuotedBack(unittest.TestCase):
     """A proposer is drawn fresh each attempt and cannot see what it wrote."""
 
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.study = os.path.join(self.dir, "study")
+        cli.main([self.study, "init", os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "fixtures", "sprocket.md")])
+        self.st = orchestrate.Study(self.study)
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
     def test_an_entry_move_is_quoted_back(self):
         r = {"proposal": {"move": "entry", "payload": "### widget\nKind: base\n"}}
-        self.assertIn("### widget", orchestrate.rejected_draft(r))
-        self.assertIn("REJECTED", orchestrate.rejected_draft(r))
+        out = orchestrate.rejected_draft(self.st, r)
+        self.assertIn("### widget", out)
+        self.assertIn("REJECTED", out)
 
-    def test_a_whole_foundation_payload_is_not_repeated(self):
-        r = {"proposal": {"move": "revision", "payload": "### a\n### b\n" * 500}}
-        self.assertEqual(orchestrate.rejected_draft(r), "")
+    def test_a_whole_foundation_payload_comes_back_as_a_change_list(self):
+        """Revision and reorder moves carry the whole foundation; quoting it
+        verbatim would double the prompt, so the change is quoted instead."""
+        with open(os.path.join(self.study, "foundation.md"), "w") as f:
+            f.write("### a\nKind: base\nStatement: One.\n")
+        r = {"proposal": {"move": "revision",
+                          "payload": "### a\nKind: base\nStatement: Two.\n"}}
+        out = orchestrate.rejected_draft(self.st, r)
+        self.assertIn("diff", out)
+        self.assertNotIn("Kind: base\nStatement: Two.\n### ", out)
 
     def test_a_round_with_no_proposal_quotes_nothing(self):
-        self.assertEqual(orchestrate.rejected_draft({}), "")
-        self.assertEqual(orchestrate.rejected_draft({"proposal": {"move": "entry"}}), "")
+        self.assertEqual(orchestrate.rejected_draft(self.st, {}), "")
+        self.assertEqual(
+            orchestrate.rejected_draft(self.st, {"proposal": {"move": "entry"}}), "")

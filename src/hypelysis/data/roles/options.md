@@ -7,5 +7,11 @@ chair's text. Preserve the chair's own options: do not invent new ones, do not m
 into one, do not rank them, and do not recommend. If the chair's question names no
 distinct options, return the readings its question implies — usually two.
 
+An option states what is TRUE under that reading — never what to write, where to put
+it, or how to phrase the entry. Drafting instructions ("flag this in Open", "add a
+Finding") are not part of a reading; strip them. The proposer, not the option, decides
+how a rulebook-conformant entry expresses the reading.
+
 Output JSON only:
 {"options": ["...", "..."]}
+\n
