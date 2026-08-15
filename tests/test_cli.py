@@ -470,3 +470,20 @@ class TestSettledFromState(unittest.TestCase):
         self.assertEqual(data["outcome"]["widget"], "escalate")
         self.assertIn("1 settled (1 escalate)", report._terms(data))
         self.assertNotIn("in progress", report._terms(data))
+
+
+class TestRejectedDraftIsQuotedBack(unittest.TestCase):
+    """A proposer is drawn fresh each attempt and cannot see what it wrote."""
+
+    def test_an_entry_move_is_quoted_back(self):
+        r = {"proposal": {"move": "entry", "payload": "### widget\nKind: base\n"}}
+        self.assertIn("### widget", orchestrate.rejected_draft(r))
+        self.assertIn("REJECTED", orchestrate.rejected_draft(r))
+
+    def test_a_whole_foundation_payload_is_not_repeated(self):
+        r = {"proposal": {"move": "revision", "payload": "### a\n### b\n" * 500}}
+        self.assertEqual(orchestrate.rejected_draft(r), "")
+
+    def test_a_round_with_no_proposal_quotes_nothing(self):
+        self.assertEqual(orchestrate.rejected_draft({}), "")
+        self.assertEqual(orchestrate.rejected_draft({"proposal": {"move": "entry"}}), "")

@@ -560,8 +560,9 @@ def phase_foundation(st: Study, lane: str):
                 queue[0:0] = hoist + fresh
                 break
             ch = r.get("chair")
-            feedback = (("CHAIR: " + ch.get("feedback", "")) if ch
-                        else json.dumps({k: r["verdicts"][k] for k in r["failed"]}, indent=1))
+            detail = (("CHAIR: " + ch.get("feedback", "")) if ch
+                      else json.dumps({k: r["verdicts"][k] for k in r["failed"]}, indent=1))
+            feedback = rejected_draft(r) + detail
             if r["decision"] == "escalate":
                 # Some escalations are not the owner's to make: test the
                 # options first, once per term, and continue if one stands.
@@ -644,6 +645,21 @@ def apply_move(st: Study, prop: dict):
 def record_deferral(st: Study, term, prop):
     with open(os.path.join(st.out, "deferred.md"), "a") as f:
         f.write(f"- **{term}** — {prop.get('reasoning', '')}\n")
+
+
+def rejected_draft(r: dict) -> str:
+    """The draft a retry is about, quoted back to its author.
+
+    A proposer is drawn fresh for every attempt and never sees what it wrote
+    last time. Objections that describe a draft — "Statement exceeds three
+    sentences" — are unactionable without it: the next draft is written from
+    scratch and can fail the same way forever. Revision and reorder moves carry
+    the whole foundation as their payload, which is already in the prompt, so
+    only entry moves are quoted."""
+    prop = r.get("proposal") or {}
+    if prop.get("move") != "entry" or not prop.get("payload"):
+        return ""
+    return f"YOUR PREVIOUS PROPOSAL, WHICH WAS REJECTED:\n{prop['payload']}\n\n"
 
 
 def adjudicate(st: Study, term: str, r: dict):
