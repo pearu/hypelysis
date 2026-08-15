@@ -410,3 +410,36 @@ class TestWallTime(unittest.TestCase):
 
     def test_a_log_without_timestamps_reports_no_wall_time(self):
         self.assertEqual(report.busy_wall([{"role": "a", "seconds": 10.0}]), 0.0)
+
+
+class TestGatesHold(TempStudy):
+    """A milestone stops every run until it is approved, not just the first."""
+
+    def setUp(self):
+        super().setUp()
+        cli.main([self.study, "init", self.doc])
+        st = orchestrate.Study(self.study)
+        st.state.update({"phase": "foundation-lane2", "approved": ["extraction"],
+                         "queue_lane1": [], "queue_lane2": [],
+                         "pending_milestone": "foundation-lane1"})
+        orchestrate.save(st.state_p, st.state)
+
+    def state(self):
+        return json.load(open(os.path.join(self.study, "state.json")))
+
+    def test_lane_two_waits_for_the_lane_one_approval(self):
+        with self.assertRaises(SystemExit) as caught:
+            cli.main([self.study, "run"])
+        self.assertEqual(caught.exception.code, 0)
+        state = self.state()
+        self.assertEqual(state["pending_milestone"], "foundation-lane1")
+        self.assertEqual(state["phase"], "foundation-lane2", "no lane-2 work may start")
+
+    def test_and_carries_on_once_it_is_approved(self):
+        cli.main([self.study, "approve"])
+        with self.assertRaises(SystemExit):
+            cli.main([self.study, "run"])          # stops at the lane-2 gate instead
+        state = self.state()
+        self.assertIn("foundation-lane1", state["approved"])
+        self.assertEqual(state["pending_milestone"], "foundation-lane2")
+        self.assertEqual(state["phase"], "report")

@@ -795,6 +795,10 @@ def cmd_run(st: Study):
         phase_foundation(st, "lane1")
         st.milestone_gate("foundation-lane1")
     elif phase == "foundation-lane2":
+        # Re-check the gate behind us, as lane 1 does for extraction: a gate
+        # that only stops the run that reached it is no gate at all, since the
+        # next invocation would carry straight on into unapproved work.
+        st.milestone_gate("foundation-lane1")
         phase_foundation(st, "lane2")
         st.milestone_gate("foundation-lane2")
     elif phase == "report":
