@@ -702,13 +702,13 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
                 "feedback": "chair unavailable; address the reviewer verdicts directly",
                 "error": str(chair)[:300]}}
     if chair["decision"] == "accept":
-        if chair.get("payload"):
-            prop = dict(prop, payload=chair["payload"])
+        prop, reviewed = chair_amendment(prop, chair)
         for t in (chair.get("revision_triggers") or []):
             with open(os.path.join(st.out, "revision-backlog.md"), "a") as f:
                 f.write(f"- **{term}** — {str(t)[:400]}\n")
         return {"decision": "accept", "failed": bad, "proposal": prop,
-                "verdicts": verdicts, "chair": chair}
+                "verdicts": verdicts, "chair": chair,
+                **({"reviewed_payload": reviewed} if reviewed else {})}
     if chair["decision"] == "escalate":
         return {"decision": "escalate", "failed": bad, "proposal": prop,
                 "verdicts": verdicts, "chair": chair}
@@ -985,6 +985,20 @@ def render_verdicts(verdicts: dict, limit: int = 20000) -> str:
             f"\n[{dropped} further objection line(s) omitted for length — "
             "ask for a revision rather than deciding without them]")
     return out
+
+
+def chair_amendment(prop: dict, chair: dict):
+    """Fold the chair's amendment into the entry, keeping what was reviewed.
+
+    A chair may amend the entry it accepts, and the amended text is what enters
+    the foundation. But the reviewers judged the draft as proposed: overwriting
+    it left the record unable to say afterwards what the readers actually read,
+    which is exactly what a later study of the checks needs. Both are kept —
+    the approved entry as the proposal, the reviewed draft beside it."""
+    amended = chair.get("payload")
+    if not amended or amended == prop.get("payload"):
+        return prop, None
+    return dict(prop, payload=amended), prop.get("payload")
 
 
 def rejected_draft(st: Study, r: dict) -> str:

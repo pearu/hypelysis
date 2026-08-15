@@ -192,3 +192,38 @@ class TestDecisionsBindReadings(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestWhatTheReviewersJudged(unittest.TestCase):
+    """A chair may amend the entry it accepts; the reviewers judged the draft
+    as proposed, and a record that keeps only the amendment cannot say
+    afterwards what they read."""
+
+    PROP = {"move": "entry", "payload": "### widget\nKind: base\nStatement: A widget.\n"}
+
+    def test_an_amendment_keeps_both_texts(self):
+        prop, reviewed = orchestrate.chair_amendment(
+            self.PROP, {"payload": "### widget\nKind: base\nStatement: A widget, amended.\n"})
+        self.assertIn("amended", prop["payload"])
+        self.assertEqual(reviewed, self.PROP["payload"])
+
+    def test_no_amendment_leaves_the_proposal_alone(self):
+        prop, reviewed = orchestrate.chair_amendment(self.PROP, {})
+        self.assertIs(prop, self.PROP)
+        self.assertIsNone(reviewed)
+
+    def test_an_identical_payload_is_not_an_amendment(self):
+        prop, reviewed = orchestrate.chair_amendment(
+            self.PROP, {"payload": self.PROP["payload"]})
+        self.assertIsNone(reviewed)
+
+    def test_the_reviewed_draft_reconstructs_the_prompt_the_readers_saw(self):
+        """The point of keeping it: hashing the reviewed draft reproduces the
+        digest recorded for the reader calls of that attempt."""
+        from hypelysis import providers, resources
+        _, reviewed = orchestrate.chair_amendment(
+            self.PROP, {"payload": "### widget\nKind: base\nStatement: amended.\n"})
+        system = resources.role("reader").replace(
+            "{profile}", "a mathematician who expects statements to be precise")
+        recorded = providers.prompt_sha(system, f"ENTRY:\n{self.PROP['payload']}")
+        self.assertEqual(providers.prompt_sha(system, f"ENTRY:\n{reviewed}"), recorded)
