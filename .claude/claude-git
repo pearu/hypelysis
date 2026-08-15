@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""Front-end for the multi-session coordination guard (see .claude/hooks/coord.py).
+
+Usage:
+    .claude/claude-git status     show the git owner and current file locks
+    .claude/claude-git claim      claim single-writer git ownership for THIS session
+    .claude/claude-git release    release git ownership held by THIS session
+
+`claim`/`release` are carried out by the coord PreToolUse hook (the only place
+that knows this session's id); this script just prints guidance. Always verify
+with `status` afterwards -- if `claim` had no effect, the hook is not active in
+this session yet (approve it and restart the session).
+"""
+import json
+import os
+import sys
+import time
+
+CLAUDE_DIR = os.path.dirname(os.path.abspath(__file__))
+OWNER_FILE = os.path.join(CLAUDE_DIR, "git-owner.json")
+LOCKS_FILE = os.path.join(CLAUDE_DIR, "locks.json")
+OWNER_TTL = 2 * 60 * 60
+FILE_LOCK_TTL = 15 * 60
+
+
+def _read(path):
+    try:
+        with open(path) as fh:
+            return json.load(fh)
+    except Exception:
+        return {}
+
+
+def cmd_status():
+    now = time.time()
+    owner = _read(OWNER_FILE)
+    print("git owner:")
+    if owner.get("session_id"):
+        age = int(now - owner.get("ts", 0))
+        state = "active" if age <= OWNER_TTL else "LAPSED (reclaimable)"
+        print("  session %s  (last active %ds ago, %s)" % (owner["session_id"][:8], age, state))
+    else:
+        print("  <unclaimed> -- git mutations are blocked until a session claims")
+
+    locks = _read(LOCKS_FILE)
+    live = {p: v for p, v in locks.items() if now - v.get("ts", 0) <= FILE_LOCK_TTL}
+    print("file locks (%d live):" % len(live))
+    if not live:
+        print("  <none>")
+    for path, v in sorted(live.items()):
+        age = int(now - v.get("ts", 0))
+        print("  %-50s session %s  (%ds ago)" % (os.path.basename(path), v["session_id"][:8], age))
+
+
+def main():
+    action = sys.argv[1] if len(sys.argv) > 1 else "status"
+    if action == "status":
+        cmd_status()
+    elif action == "claim":
+        print("[claude-git] Requested git ownership for this session via the coord hook.")
+        print("             Verify with:  .claude/claude-git status")
+    elif action == "release":
+        print("[claude-git] Requested release of git ownership via the coord hook.")
+        print("             Verify with:  .claude/claude-git status")
+    else:
+        print(__doc__)
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

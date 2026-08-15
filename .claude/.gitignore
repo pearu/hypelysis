@@ -1,0 +1,4 @@
+# Runtime state for the multi-session coordination guard (see hooks/coord.py)
+git-owner.json
+locks.json
+.coord.lock
