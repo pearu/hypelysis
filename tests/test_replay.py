@@ -35,9 +35,12 @@ class ReplayStudy(unittest.TestCase):
         Replay.reset()
         self.dir = tempfile.mkdtemp()
         self.study = os.path.join(self.dir, "study")
+        # the fixture recorded one batch of draws, before extraction ran in
+        # batches; a replay must ask for exactly what was recorded
         cli.main([self.study, "init", DOC,
                   "--set", "default.provider=replay",
-                  "--set", f"default.fixture={EXTRACTION}"])
+                  "--set", f"default.fixture={EXTRACTION}",
+                  "--set", "extraction_batches=1"])
 
     def tearDown(self):
         Replay.reset()

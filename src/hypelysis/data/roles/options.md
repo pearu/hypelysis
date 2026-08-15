@@ -14,4 +14,3 @@ how a rulebook-conformant entry expresses the reading.
 
 Output JSON only:
 {"options": ["...", "..."]}
-\n

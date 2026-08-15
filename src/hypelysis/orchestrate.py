@@ -39,7 +39,12 @@ MILESTONES = ["extraction", "foundation-lane1", "foundation-lane2", "report"]
 # it must not bind. What a decision settles is a proposition; the words it
 # arrived in are not part of it, and a proposer told otherwise transcribes them
 # into a Statement the format then rejects.
-DECISION_BINDS_THE_READING = '\\n\\nThis decision fixes the READING: the proposition above is settled. It does not fix any wording. Draft the entry as the rulebook requires, expressing this reading; where the decision mentions record-keeping (openness, findings), that is your judgment to place, not text to transcribe.'
+DECISION_BINDS_THE_READING = (
+    "\n\nThis decision fixes the READING: the proposition above is settled. It "
+    "does not fix any wording. Draft the entry as the rulebook requires, "
+    "expressing this reading; where the decision mentions record-keeping "
+    "(openness, findings), that is your judgment to place, not text to "
+    "transcribe.")
 
 
 # ------------------------------------------------------------------ plumbing
@@ -210,7 +215,7 @@ class Study:
             return {"verdict": "no", "objections": [f"UNPARSEABLE OUTPUT: {str(e)[:200]}"],
                     "worker_error": True}
 
-    def milestone_gate(self, name):
+    def milestone_gate(self, name, detail: str = ""):
         """Stop until the owner has approved this milestone."""
         approved = self.state.get("approved", [])
         if name in approved:
@@ -219,47 +224,134 @@ class Study:
         save(self.state_p, self.state)
         req = os.path.join(self.out, "APPROVAL-REQUIRED.md")
         with open(req, "w") as f:
-            f.write(f"# Approval required: {name}\n\nReview the artifacts in this "
-                    f"directory, then run:\n\n    hypelysis {self.out} approve\n")
+            f.write(f"# Approval required: {name}\n\n"
+                    + (detail + "\n\n" if detail else "")
+                    + "Review the artifacts in this directory, then run:\n\n"
+                    + f"    hypelysis {self.out} approve\n")
         print(f"\nSTOP — milestone '{name}' awaits owner approval ({req})")
         sys.exit(0)
 
 
 # ------------------------------------------------------------------ phases
-def phase_extract(st: Study):
+def phase_extract(st: Study) -> str:
+    """Find the terms a foundation must settle, one batch of draws at a time.
+
+    Independent draws mostly re-find each other's terms: measured on this
+    method, four candidates in five that a fresh draw reports are already
+    recorded, and the union of such draws stops growing long before the
+    document is exhausted — that ceiling measures the draws' shared attention,
+    not the document. So only the first batch draws blind. Every later batch is
+    shown what is already recorded and asked for what the list misses, free to
+    re-decompose a recorded term where the granularity looks wrong. Batches
+    stop when one adds almost nothing.
+
+    Draws inside a batch run together and never see each other; only completed
+    batches are carried forward. Each draw gets its own draw index, or they
+    would share a cache key and return one another's answers.
+    """
     doc = open(os.path.join(st.sandbox, "document.md")).read()
     rb = open(os.path.join(st.sandbox, "rulebook.md")).read()
     n = st.cfg.get("extractors", 3)
-    with ThreadPoolExecutor(n) as ex:
-        # draw=i keeps these independent: the extractors receive one identical
-        # prompt, so without it they share a cache key and the second and third
-        # draws return the first one's answer — whenever a call lands before its
-        # siblings start, and always on a resumed run.
-        outs = list(ex.map(lambda i: st.call("extractor", st.role("extractor"),
-                    f"RULEBOOK:\n{rb}\n\nDOCUMENT:\n{doc}", draw=i), range(n)))
-    merged, seen = [], set()
-    for out in outs:
-        for t in out.get("terms", []):
-            key = t["term"].strip().lower()
-            if key not in seen:
-                seen.add(key)
-                merged.append(t)
+    max_batches = st.cfg.get("extraction_batches", 4)
+    stop_at = st.cfg.get("extraction_stop", 1)
+    base = f"RULEBOOK:\n{rb}\n\nDOCUMENT:\n{doc}"
+    merged, seen, batches, draw = [], set(), [], 0
+    for b in range(max(max_batches, 1)):
+        if b == 0:
+            prompt = base
+        else:
+            prompt = (base + "\n\nCANDIDATES ALREADY RECORDED by earlier draws "
+                      "(pre-set; do not re-list them):\n"
+                      + "\n".join(f"- {t['term']}" for t in merged)
+                      + "\n\nPropose the ADDITIONAL candidate terms this list misses, "
+                      "in the same JSON format. If the list's granularity looks wrong "
+                      "to you — a recorded term that should be split or differently "
+                      "decomposed — you may also propose the finer terms.")
+        with ThreadPoolExecutor(n) as ex:
+            outs = list(ex.map(
+                lambda i: st.call("extractor", st.role("extractor"), prompt, draw=i),
+                range(draw, draw + n)))
+        draw += n
+        added = 0
+        for out in outs:
+            for t in (out.get("terms") or []):
+                key = str(t.get("term", "")).strip().lower()
+                if key and key not in seen:
+                    seen.add(key)
+                    merged.append(t)
+                    added += 1
+        batches.append({"batch": b + 1, "conditioned": b > 0,
+                        "draws": n, "new_terms": added, "total": len(merged)})
+        print(f"extraction batch {b + 1}"
+              f"{' (conditioned)' if b else ' (independent)'}: "
+              f"+{added} new, {len(merged)} candidates so far")
+        if b > 0 and added <= stop_at:
+            break
     save(os.path.join(st.out, "candidates-raw.json"), merged)
-    merge_queue(st, merged)
-    print(f"extraction: {len(merged)} raw candidates")
+    st.state["extraction_batches"] = batches
+    save(st.state_p, st.state)
+    detail = merge_queue(st, merged)
+    print(f"extraction: {len(merged)} raw candidates in {len(batches)} batch(es)")
+    lines = ["## How the candidates were found", ""]
+    for x in batches:
+        lines.append(f"- batch {x['batch']} "
+                     f"({'conditioned on what was already found' if x['conditioned'] else 'independent'}, "
+                     f"{x['draws']} draws): +{x['new_terms']} new, {x['total']} total")
+    if batches and batches[-1]["new_terms"] > stop_at:
+        lines += ["", f"The last batch was still finding {batches[-1]['new_terms']} new "
+                  "terms when the batch limit was reached: raise extraction_batches if "
+                  "the set looks short."]
+    return "\n".join(lines) + "\n\n" + detail
 
 
-def merge_queue(st: Study, merged):
+def merge_queue(st: Study, merged) -> str:
+    """Turn the raw candidates into the working queue.
+
+    Merging is not only tidying: a term the merger leaves out is out of the
+    study, which is a decision about scope. Every drop is named with its reason
+    and shown at the gate, and a term that is neither queued nor accounted for
+    is reported as unaccounted — a silent cut is exactly what the owner's
+    approval is supposed to cover.
+    """
     rb = open(os.path.join(st.sandbox, "rulebook.md")).read()
     out = st.call("merger", st.role("merger"),
                   f"RULEBOOK:\n{rb}\n\nRAW CANDIDATES:\n{json.dumps(merged, indent=1)}")
     queue = out["queue"]
+    dropped = [d for d in (out.get("dropped") or []) if isinstance(d, dict)]
+    accounted = {str(t.get("term", "")).strip().lower() for t in queue}
+    for d in dropped:
+        accounted.add(str(d.get("term", "")).strip().lower())
+        for v in (d.get("merged_into") or []) if isinstance(d.get("merged_into"), list) else []:
+            accounted.add(str(v).strip().lower())
+    for t in queue:
+        for v in (t.get("merged_from") or []):
+            accounted.add(str(v).strip().lower())
+    unaccounted = [t.get("term") for t in merged
+                   if str(t.get("term", "")).strip().lower() not in accounted]
     save(os.path.join(st.out, "candidates.json"), queue)
+    save(os.path.join(st.out, "candidates-dropped.json"),
+         {"dropped": dropped, "unaccounted": unaccounted})
     st.state["phase"] = "foundation-lane1"
     st.state["queue_lane1"] = [t["term"] for t in queue if t.get("lane") != "people"]
     st.state["queue_lane2"] = [t["term"] for t in queue if t.get("lane") == "people"]
     save(st.state_p, st.state)
-    print(f"queue: {len(st.state['queue_lane1'])} mechanism + {len(st.state['queue_lane2'])} people")
+    print(f"queue: {len(st.state['queue_lane1'])} mechanism + "
+          f"{len(st.state['queue_lane2'])} people"
+          + (f"; {len(dropped)} dropped" if dropped else "")
+          + (f"; {len(unaccounted)} unaccounted" if unaccounted else ""))
+    lines = [f"## The queue: {len(queue)} terms from {len(merged)} candidates", ""]
+    if dropped:
+        lines += ["Dropped, with the merger's reason — a term left out is out of the "
+                  "study:", ""]
+        lines += [f"- **{d.get('term')}** — {d.get('why') or '(no reason given)'}"
+                  for d in dropped]
+        lines.append("")
+    if unaccounted:
+        lines += ["**Neither queued nor accounted for** (the merger cut these without "
+                  "saying so):", ""]
+        lines += [f"- {t}" for t in unaccounted]
+        lines.append("")
+    return "\n".join(lines)
 
 
 FIELD_START = re.compile(r"^(Kind|Given|Statement|Because|Uses|Notation|Defers|Open"
@@ -955,8 +1047,8 @@ def cmd_run(st: Study):
     """Advance the study to its next owner gate."""
     phase = st.state.get("phase", "extraction")
     if phase == "extraction":
-        phase_extract(st)
-        st.milestone_gate("extraction")
+        detail = phase_extract(st)
+        st.milestone_gate("extraction", detail)
     elif phase == "foundation-lane1":
         st.milestone_gate("extraction")
         phase_foundation(st, "lane1")
