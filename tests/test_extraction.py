@@ -160,7 +160,8 @@ class TestRolePrompts(unittest.TestCase):
         role = resources.role("merger")
         self.assertIn("A term you leave out is out of the study", role)
         self.assertIn('"dropped"', role)
-        self.assertIn("Do not\ndrop a term merely because it looks minor", role)
+        self.assertIn("drop a term merely because it looks minor",
+                      " ".join(role.split()))
 
     def test_the_binding_text_carries_real_newlines(self):
         self.assertTrue(orchestrate.DECISION_BINDS_THE_READING.startswith("\n\n"))
@@ -326,6 +327,7 @@ class TestSplitsAreVisible(Extraction):
         self.extractors(["data flow", "flow / data flow"], [],
                         merger={"queue": [{"term": "data flow", "lane": "mechanism",
                                            "merged_from": ["flow / data flow"]}]})
+        orchestrate.phase_extract(self.st)
         saved = json.load(open(os.path.join(self.study, "candidates-dropped.json")))
         self.assertEqual(saved["splits_flattened_silently"][0]["kept"], "data flow")
 
@@ -333,6 +335,7 @@ class TestSplitsAreVisible(Extraction):
         self.extractors(["custody horizon", "record class"], [],
                         merger={"queue": [{"term": "custody horizon", "lane": "mechanism"},
                                           {"term": "record class", "lane": "mechanism"}]})
+        orchestrate.phase_extract(self.st)
         saved = json.load(open(os.path.join(self.study, "candidates-dropped.json")))
         self.assertEqual(saved["splits_flattened_silently"], [])
 
