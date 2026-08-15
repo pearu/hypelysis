@@ -65,6 +65,8 @@ def overrides_from(args) -> dict:
         cfg["foundation_view"] = args.view
     if getattr(args, "keep_going", None):
         cfg["keep_going"] = args.keep_going
+    if getattr(args, "until", None) is not None:
+        cfg["until"] = args.until
     for assignment in getattr(args, "set", None) or []:
         if "=" not in assignment:
             raise SystemExit(f"--set needs key=value, got {assignment!r}")
@@ -97,6 +99,10 @@ def add_config_flags(p: argparse.ArgumentParser):
                         "cannot be settled by refutation: pick one and mark the "
                         "study as carrying a choice its owner never made. For "
                         "benchmarks — a study of record needs the owner (RULES.md R4)")
+    p.add_argument("--until", type=int, metavar="N",
+                   help="settle at most N terms in this invocation, then stop with "
+                        "the study resumable — 0 does the phase's own work (an "
+                        "extraction, say) and no terms at all")
     p.add_argument("--set", action="append", metavar="KEY=VALUE",
                    help="any other config setting, dotted for nesting, e.g. "
                         "--set retry_budget=5 --set roles.skeptic.model=claude-opus-5")

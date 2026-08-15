@@ -172,3 +172,55 @@ class TestRolePrompts(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestUntil(unittest.TestCase):
+    """`--until N` bounds an invocation to N terms and leaves it resumable."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.study = os.path.join(self.dir, "study")
+        cli.main([self.study, "init", os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "fixtures", "sprocket.md")])
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def prepared(self, until, already=()):
+        st = orchestrate.Study(self.study, overrides={"until": until})
+        st.state.update({"phase": "foundation-lane1",
+                         "approved": ["extraction"],
+                         "queue_lane1": ["a", "b", "c"],
+                         "outcomes": {t: "accept" for t in already}})
+        orchestrate.save(st.state_p, st.state)
+        st.call = lambda *a, **k: self.fail("no term should be attempted")
+        return st
+
+    def test_zero_terms_stops_before_any_work(self):
+        st = self.prepared(0)
+        with self.assertRaises(SystemExit) as caught:
+            orchestrate.phase_foundation(st, "lane1")
+        self.assertEqual(caught.exception.code, 0)
+        self.assertEqual(json.load(open(st.state_p))["queue_lane1"], ["a", "b", "c"])
+
+    def test_the_limit_counts_only_this_invocation(self):
+        """A study that already settled terms is not finished by a later
+        --until 2; it settles two more."""
+        st = self.prepared(2, already=("x", "y", "z"))
+        st.call = lambda *a, **k: self.fail("stopped too early")
+        try:
+            orchestrate.phase_foundation(st, "lane1")
+        except SystemExit:
+            self.fail("--until 2 must not stop before settling anything")
+        except AssertionError:
+            pass          # reached the first term, which is the point
+
+    def test_the_flag_reaches_the_config(self):
+        args = cli.build_parser().parse_args([self.study, "run", "--until", "5"])
+        self.assertEqual(cli.overrides_from(args)["until"], 5)
+        args = cli.build_parser().parse_args([self.study, "run"])
+        self.assertNotIn("until", cli.overrides_from(args))
+
+    def test_zero_is_a_real_limit_not_an_absent_one(self):
+        args = cli.build_parser().parse_args([self.study, "run", "--until", "0"])
+        self.assertEqual(cli.overrides_from(args)["until"], 0)

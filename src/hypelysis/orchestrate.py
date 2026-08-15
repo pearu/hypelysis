@@ -608,11 +608,21 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
 
 def phase_foundation(st: Study, lane: str):
     budget = st.cfg.get("retry_budget", 3)
+    # `--until N` bounds one invocation to N terms: a bench that wants five
+    # terms of evidence should not have to run a whole lane, and hand-editing
+    # the queue to get there loses the run's own account of what it did.
+    until = st.cfg.get("until")
+    started = len(st.state.get("outcomes", {}))
     qkey = "queue_lane1" if lane == "lane1" else "queue_lane2"
     queue = st.state.get(qkey, [])
     resolutions = st.state.get("resolutions", {})
     while queue:
         done = st.state.get("outcomes", {})
+        if until is not None and len(done) - started >= until:
+            save(st.state_p, st.state)
+            print(f"\nSTOP — {len(done) - started} term(s) settled this run, as asked "
+                  f"(--until {until}); {len(queue)} still queued. Run again to continue.")
+            sys.exit(0)
         if len(done) >= 6:
             landed = sum(1 for v in done.values() if v == "accept")
             if landed == 0 or landed / len(done) < 0.2:
