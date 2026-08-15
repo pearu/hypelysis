@@ -443,3 +443,30 @@ class TestGatesHold(TempStudy):
         self.assertIn("foundation-lane1", state["approved"])
         self.assertEqual(state["pending_milestone"], "foundation-lane2")
         self.assertEqual(state["phase"], "report")
+
+
+class TestSettledFromState(unittest.TestCase):
+    """A term escalated after its retries is settled, though the decision log's
+    last word on it is a retry."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.study = os.path.join(self.dir, "study")
+        cli.main([self.study, "init", os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "fixtures", "sprocket.md")])
+        with open(os.path.join(self.study, "log", "decisions.jsonl"), "w") as f:
+            for attempt in range(3):
+                f.write(json.dumps({"term": "widget", "attempt": attempt,
+                                    "decision": "retry"}) + "\n")
+        st = orchestrate.Study(self.study)
+        st.state["outcomes"] = {"widget": "escalate"}
+        orchestrate.save(st.state_p, st.state)
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def test_the_state_has_the_last_word(self):
+        data = report.gather(self.study)
+        self.assertEqual(data["outcome"]["widget"], "escalate")
+        self.assertIn("1 settled (1 escalate)", report._terms(data))
+        self.assertNotIn("in progress", report._terms(data))

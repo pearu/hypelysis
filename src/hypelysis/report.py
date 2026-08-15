@@ -58,10 +58,15 @@ def gather(out: str) -> dict:
     sp = os.path.join(out, "state.json")
     if os.path.exists(sp):
         state = json.load(open(sp))
-    cp = os.path.join(out, "candidates.json")
+    cp = os.path.join(out, "candidates.json")  # noqa: E501
     candidates = json.load(open(cp)) if os.path.exists(cp) else []
     rp = os.path.join(out, "candidates-raw.json")
     raw = json.load(open(rp)) if os.path.exists(rp) else []
+    # The state's outcomes are the authoritative record of what settled: a
+    # term escalated after exhausting its retries is recorded there, while the
+    # decision log's last word on it is the retry that ran out.
+    for term, decided in (state.get("outcomes") or {}).items():
+        outcome[term] = decided
     invocations = rows("invocations.jsonl")
     runs = [r for r in invocations if r.get("command") == "run"]
     latest = runs[-1] if runs else (invocations[-1] if invocations else None)
