@@ -286,3 +286,61 @@ class TestAFailedMergerIsNotAMalformedOne(Extraction):
         message = str(caught.exception.code)
         self.assertIn("answered without a queue", message)
         self.assertIn("wrong shape", message)
+
+
+class TestSplitsAreVisible(Extraction):
+    """A candidate written as a split proposal says a reader thought one term
+    is doing two jobs. Flattening it decides the document's granularity."""
+
+    def test_a_declined_split_reaches_the_gate_with_its_reason(self):
+        self.extractors(["grant", "grant minting vs. grant exercise"], [],
+                        merger={"queue": [{"term": "grant", "lane": "mechanism",
+                                           "merged_from": ["grant minting vs. grant exercise"]}],
+                                "splits_declined": [
+                                    {"proposed": "grant minting vs. grant exercise",
+                                     "kept": "grant",
+                                     "why": "the document never separates them"}]})
+        detail = orchestrate.phase_extract(self.st)
+        self.assertIn("granularity is the owner's to review", detail)
+        self.assertIn("the document never separates them", detail)
+
+    def test_a_split_flattened_without_a_word_is_found_anyway(self):
+        """The merger's own account is not trusted for this."""
+        self.extractors(["grant", "grant minting vs. grant exercise"], [],
+                        merger={"queue": [{"term": "grant", "lane": "mechanism",
+                                           "merged_from": ["grant minting vs. grant exercise"]}]})
+        detail = orchestrate.phase_extract(self.st)
+        self.assertIn("without the merger saying so", detail)
+        saved = json.load(open(os.path.join(self.study, "candidates-dropped.json")))
+        self.assertEqual(saved["splits_flattened_silently"][0]["proposed"],
+                         "grant minting vs. grant exercise")
+
+    def test_an_honoured_split_is_not_flagged(self):
+        self.extractors(["grant minting vs. grant exercise"], [],
+                        merger={"queue": [{"term": "grant minting", "lane": "mechanism"},
+                                          {"term": "grant exercise", "lane": "mechanism"}]})
+        detail = orchestrate.phase_extract(self.st)
+        self.assertNotIn("granularity is the owner's", detail)
+
+    def test_a_slash_variant_is_treated_the_same_way(self):
+        self.extractors(["data flow", "flow / data flow"], [],
+                        merger={"queue": [{"term": "data flow", "lane": "mechanism",
+                                           "merged_from": ["flow / data flow"]}]})
+        saved = json.load(open(os.path.join(self.study, "candidates-dropped.json")))
+        self.assertEqual(saved["splits_flattened_silently"][0]["kept"], "data flow")
+
+    def test_an_ordinary_term_is_never_read_as_a_split(self):
+        self.extractors(["custody horizon", "record class"], [],
+                        merger={"queue": [{"term": "custody horizon", "lane": "mechanism"},
+                                          {"term": "record class", "lane": "mechanism"}]})
+        saved = json.load(open(os.path.join(self.study, "candidates-dropped.json")))
+        self.assertEqual(saved["splits_flattened_silently"], [])
+
+
+class TestMergerBookkeeping(unittest.TestCase):
+    def test_the_prompt_names_the_failure_that_was_observed(self):
+        role = resources.role("merger")
+        self.assertIn("named verbatim in `merged_from`", role)
+        self.assertIn("Folding a variant in without naming it there is the common failure",
+                      role)
+        self.assertIn("splits_declined", role)

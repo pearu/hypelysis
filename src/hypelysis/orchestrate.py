@@ -350,9 +350,27 @@ def merge_queue(st: Study, merged) -> str:
             accounted.add(str(v).strip().lower())
     unaccounted = [t.get("term") for t in merged
                    if str(t.get("term", "")).strip().lower() not in accounted]
+    # A candidate written as a split proposal — "grant minting vs. grant
+    # exercise" — says a reader thought one recorded term is doing two jobs.
+    # Flattening it back into one term decides the document's granularity, so
+    # it is found here rather than trusted to the merger's own account.
+    declined = [d for d in (out.get("splits_declined") or []) if isinstance(d, dict)]
+    told = {str(d.get("proposed", "")).strip().lower() for d in declined}
+    queued = {str(t.get("term", "")).strip().lower() for t in queue}
+    silent_splits = []
+    for t in merged:
+        name = str(t.get("term", "")).strip()
+        parts = re.split(r"\s+vs\.?\s+|\s+/\s+", name)
+        if len(parts) < 2 or name.strip().lower() in told:
+            continue
+        survived = [p for p in parts if p.strip().lower() in queued]
+        if len(survived) < len(parts):
+            silent_splits.append({"proposed": name,
+                                  "kept": survived[0] if survived else None})
     save(os.path.join(st.out, "candidates.json"), queue)
     save(os.path.join(st.out, "candidates-dropped.json"),
-         {"dropped": dropped, "unaccounted": unaccounted})
+         {"dropped": dropped, "unaccounted": unaccounted,
+          "splits_declined": declined, "splits_flattened_silently": silent_splits})
     st.state["phase"] = "foundation-lane1"
     st.state["queue_lane1"] = [t["term"] for t in queue if t.get("lane") != "people"]
     st.state["queue_lane2"] = [t["term"] for t in queue if t.get("lane") == "people"]
@@ -372,6 +390,14 @@ def merge_queue(st: Study, merged) -> str:
         lines += ["**Neither queued nor accounted for** (the merger cut these without "
                   "saying so):", ""]
         lines += [f"- {t}" for t in unaccounted]
+        lines.append("")
+    if declined or silent_splits:
+        lines += ["A draw proposed splitting a term in two and the merger kept one — "
+                  "granularity is the owner's to review:", ""]
+        lines += [f"- **{d.get('proposed')}** kept as *{d.get('kept')}* — "
+                  f"{d.get('why') or '(no reason given)'}" for d in declined]
+        lines += [f"- **{d['proposed']}** flattened to *{d['kept'] or 'nothing'}*, "
+                  "without the merger saying so" for d in silent_splits]
         lines.append("")
     return "\n".join(lines)
 
