@@ -318,6 +318,58 @@ def phase_extract(st: Study) -> str:
     return "\n".join(lines) + "\n\n" + detail
 
 
+def first_mention(term: str, doc: str) -> int:
+    """Where the document first speaks of a term. The document is what both a
+    study and its reader already share, so it orders terms without any study
+    needing to know what another study did."""
+    t = " ".join(str(term).strip().lower().split())
+    i = doc.find(t)
+    if i >= 0:
+        return i
+    seen = [doc.find(w) for w in re.findall(r"[a-z][a-z-]{3,}", t)]
+    seen = [x for x in seen if x >= 0]
+    return min(seen) if seen else len(doc)
+
+
+def canonical_order(queue: list, doc: str):
+    """Put the queue in the one order the method actually implies.
+
+    The rulebook fixes order only up to topology — an entry may use only
+    earlier entries — and every linearisation of that order is legal. The
+    merger was choosing among them by whim, and two studies of one document
+    diverged there rather than in what they had found. Sorting the same
+    topology deterministically, with ties broken by the document's own order of
+    mention, removes the whim and keeps every judgement.
+
+    Lane 2 follows lane 1 entire (rule 6). Returns the ordered queue and the
+    cycles that had to be broken, which are the presupposition hints
+    contradicting each other and are worth an owner's eye.
+    """
+    doc = doc.lower()
+    ordered, cycles = [], []
+    for people in (False, True):
+        block = [t for t in queue if (t.get("lane") == "people") == people]
+        names = {str(t.get("term", "")).strip().lower() for t in block}
+        by_name = {str(t.get("term", "")).strip().lower(): t for t in block}
+        deps = {n: {str(p).strip().lower() for p in (by_name[n].get("presupposes") or [])
+                    if str(p).strip().lower() in names
+                    and str(p).strip().lower() != n}
+                for n in names}
+        placed, mention = set(), {n: first_mention(n, doc) for n in names}
+        while len(placed) < len(names):
+            ready = sorted((n for n in names if n not in placed and deps[n] <= placed),
+                           key=lambda n: (mention[n], n))
+            if not ready:
+                stuck = sorted((n for n in names if n not in placed),
+                               key=lambda n: (mention[n], n))
+                ready = [stuck[0]]
+                cycles.append({"term": by_name[ready[0]]["term"],
+                               "waiting_on": sorted(deps[ready[0]] - placed)})
+            ordered.append(by_name[ready[0]])
+            placed.add(ready[0])
+    return ordered, cycles
+
+
 def merge_queue(st: Study, merged) -> str:
     """Turn the raw candidates into the working queue.
 
@@ -367,6 +419,8 @@ def merge_queue(st: Study, merged) -> str:
         if len(survived) < len(parts):
             silent_splits.append({"proposed": name,
                                   "kept": survived[0] if survived else None})
+    doc = open(os.path.join(st.sandbox, "document.md")).read()
+    queue, cycles = canonical_order(queue, doc)
     save(os.path.join(st.out, "candidates.json"), queue)
     save(os.path.join(st.out, "candidates-dropped.json"),
          {"dropped": dropped, "unaccounted": unaccounted,
@@ -379,7 +433,15 @@ def merge_queue(st: Study, merged) -> str:
           f"{len(st.state['queue_lane2'])} people"
           + (f"; {len(dropped)} dropped" if dropped else "")
           + (f"; {len(unaccounted)} unaccounted" if unaccounted else ""))
-    lines = [f"## The queue: {len(queue)} terms from {len(merged)} candidates", ""]
+    lines = [f"## The queue: {len(queue)} terms from {len(merged)} candidates", "",
+             "Ordered by what each term presupposes, ties broken by where the document "
+             "first speaks of it — the same queue whoever merges it.", ""]
+    if cycles:
+        lines += ["**These presupposition hints contradict each other**; the cycle was "
+                  "broken at the term the document mentions first:", ""]
+        lines += [f"- **{c['term']}** placed before {', '.join(c['waiting_on'])}"
+                  for c in cycles]
+        lines.append("")
     if dropped:
         lines += ["Dropped, with the merger's reason — a term left out is out of the "
                   "study:", ""]

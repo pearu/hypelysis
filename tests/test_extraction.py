@@ -347,3 +347,94 @@ class TestMergerBookkeeping(unittest.TestCase):
         self.assertIn("Folding a variant in without naming it there is the common failure",
                       role)
         self.assertIn("splits_declined", role)
+
+
+class TestCanonicalOrder(unittest.TestCase):
+    """The rulebook fixes order only up to topology; every linearisation of it
+    is legal, so the merger was choosing among them by whim and two studies of
+    one document diverged there rather than in what they had found."""
+
+    DOC = ("An estate holds fields. A custody ledger records custody events. "
+           "A grant engine issues grants under a policy.")
+
+    def order(self, queue, doc=None):
+        got, cycles = orchestrate.canonical_order(queue, doc or self.DOC)
+        return [t["term"] for t in got], cycles
+
+    def test_a_term_follows_what_it_presupposes(self):
+        got, _ = self.order([{"term": "grant", "presupposes": ["policy"]},
+                             {"term": "policy"}])
+        self.assertLess(got.index("policy"), got.index("grant"))
+
+    def test_ties_break_on_the_document_s_own_order_of_mention(self):
+        got, _ = self.order([{"term": "grant engine"}, {"term": "estate"},
+                             {"term": "custody ledger"}])
+        self.assertEqual(got, ["estate", "custody ledger", "grant engine"])
+
+    def test_the_people_lane_follows_the_mechanism_lane_entire(self):
+        got, _ = self.order([{"term": "estate", "lane": "people"},
+                             {"term": "grant engine", "lane": "mechanism"}])
+        self.assertEqual(got, ["grant engine", "estate"])
+
+    def test_the_same_queue_always_orders_the_same_way(self):
+        queue = [{"term": "grant", "presupposes": ["policy"]}, {"term": "policy"},
+                 {"term": "estate"}, {"term": "custody ledger"}]
+        first, _ = self.order(queue)
+        for _ in range(5):
+            again, _ = self.order(list(reversed(queue)))
+            self.assertEqual(first, again)
+
+    def test_a_dependency_outside_the_queue_is_not_waited_for(self):
+        got, cycles = self.order([{"term": "grant", "presupposes": ["never extracted"]}])
+        self.assertEqual(got, ["grant"])
+        self.assertEqual(cycles, [])
+
+    def test_a_term_presupposing_itself_does_not_deadlock(self):
+        got, cycles = self.order([{"term": "estate", "presupposes": ["estate"]}])
+        self.assertEqual(got, ["estate"])
+        self.assertEqual(cycles, [])
+
+    def test_a_cycle_is_broken_at_the_earliest_mentioned_and_reported(self):
+        got, cycles = self.order([{"term": "custody ledger", "presupposes": ["grant engine"]},
+                                  {"term": "grant engine", "presupposes": ["custody ledger"]}])
+        self.assertEqual(got, ["custody ledger", "grant engine"])
+        self.assertEqual(len(cycles), 1)
+        self.assertEqual(cycles[0]["term"], "custody ledger")
+        self.assertEqual(cycles[0]["waiting_on"], ["grant engine"])
+
+    def test_a_term_the_document_never_names_sorts_last(self):
+        got, _ = self.order([{"term": "quicksilver"}, {"term": "estate"}])
+        self.assertEqual(got, ["estate", "quicksilver"])
+
+    def test_first_mention_falls_back_to_the_words_of_a_phrase(self):
+        """'custody event' as written may not appear; its words do."""
+        self.assertLess(orchestrate.first_mention("estate holdings", self.DOC.lower()),
+                        orchestrate.first_mention("grant engine mechanics",
+                                                  self.DOC.lower()))
+
+
+class TestCanonicalOrderReachesTheGate(Extraction):
+    def test_the_gate_says_how_the_queue_was_ordered(self):
+        """sprocket.md speaks of rotational stress before a service window and
+        of both before its duty ledger, so the queue does too — whatever order
+        the merger happened to return."""
+        terms = ["duty ledger", "service window", "rotational stress"]
+        self.extractors(terms, [],
+                        merger={"queue": [{"term": t, "lane": "mechanism"}
+                                          for t in terms]})
+        detail = orchestrate.phase_extract(self.st)
+        self.assertIn("ties broken by where the document first speaks of it", detail)
+        queued = [c["term"] for c in
+                  json.load(open(os.path.join(self.study, "candidates.json")))]
+        self.assertEqual(queued, ["rotational stress", "service window", "duty ledger"])
+
+    def test_contradicting_hints_are_shown_to_the_owner(self):
+        self.extractors(["gearbox", "torque budget"], [],
+                        merger={"queue": [
+                            {"term": "gearbox", "lane": "mechanism",
+                             "presupposes": ["torque budget"]},
+                            {"term": "torque budget", "lane": "mechanism",
+                             "presupposes": ["gearbox"]}]})
+        detail = orchestrate.phase_extract(self.st)
+        self.assertIn("presupposition hints contradict each other", detail)
+        self.assertIn("placed before", detail)
