@@ -35,6 +35,18 @@ READER_PROFILES = ["a careful reader whose first language is not English",
                    "a software engineer who will implement what the text describes",
                    "a mathematician who expects statements to be precise"]
 MILESTONES = ["extraction", "foundation-lane1", "foundation-lane2", "report"]
+# Asked what a list misses, a worker answers — whether or not anything is
+# missing. Measured: batches conditioned on a longer list returned MORE terms,
+# not fewer, until they were naming every noun in the document. So the ask must
+# make an empty answer expected, and make each addition carry its grounds.
+CONDITIONED_BATCH = (
+    "Name only what this list MISSES: terms the document loads that no recorded term "
+    "covers. An empty list is the expected answer when the list is already complete — "
+    "returning nothing is a legitimate result, and a better answer than padding it with "
+    "words the document merely contains. For each term you do add, the work line must "
+    "name what the document does with it: the claim, count, or mechanism that turns on "
+    "the term. If the recorded granularity looks wrong — a term that should be split, or "
+    "decomposed differently — propose the finer terms and say what the split buys.")
 # A verdict that binds an actor must travel with grounds enough to act on, or
 # it must not bind. What a decision settles is a proposition; the words it
 # arrived in are not part of it, and a proposer told otherwise transcribes them
@@ -252,7 +264,12 @@ def phase_extract(st: Study) -> str:
     doc = open(os.path.join(st.sandbox, "document.md")).read()
     rb = open(os.path.join(st.sandbox, "rulebook.md")).read()
     n = st.cfg.get("extractors", 3)
-    max_batches = st.cfg.get("extraction_batches", 4)
+    # Two batches by default — one blind, one hunting what it missed. Of ten
+    # terms known to be real and known to be missed by blind draws, twenty-seven
+    # of thirty instances were recovered by the second batch; later batches keep
+    # finding real terms, but diluted, and every candidate is queue length a run
+    # pays for.
+    max_batches = st.cfg.get("extraction_batches", 2)
     stop_at = st.cfg.get("extraction_stop", 1)
     base = f"RULEBOOK:\n{rb}\n\nDOCUMENT:\n{doc}"
     merged, seen, batches, draw = [], set(), [], 0
@@ -263,10 +280,7 @@ def phase_extract(st: Study) -> str:
             prompt = (base + "\n\nCANDIDATES ALREADY RECORDED by earlier draws "
                       "(pre-set; do not re-list them):\n"
                       + "\n".join(f"- {t['term']}" for t in merged)
-                      + "\n\nPropose the ADDITIONAL candidate terms this list misses, "
-                      "in the same JSON format. If the list's granularity looks wrong "
-                      "to you — a recorded term that should be split or differently "
-                      "decomposed — you may also propose the finer terms.")
+                      + "\n\n" + CONDITIONED_BATCH)
         with ThreadPoolExecutor(n) as ex:
             outs = list(ex.map(
                 lambda i: st.call("extractor", st.role("extractor"), prompt, draw=i),
@@ -316,6 +330,14 @@ def merge_queue(st: Study, merged) -> str:
     rb = open(os.path.join(st.sandbox, "rulebook.md")).read()
     out = st.call("merger", st.role("merger"),
                   f"RULEBOOK:\n{rb}\n\nRAW CANDIDATES:\n{json.dumps(merged, indent=1)}")
+    if out.get("worker_error"):
+        save(st.state_p, st.state)
+        raise SystemExit(
+            "STOP - the merger call failed (" + str((out.get("objections") or [""])[0])[:200]
+            + "); the draws are saved and cached, so re-running costs only the merge")
+    if "queue" not in out:
+        raise SystemExit("STOP - the merger answered without a queue: "
+                         + json.dumps(out)[:500])
     queue = out["queue"]
     dropped = [d for d in (out.get("dropped") or []) if isinstance(d, dict)]
     accounted = {str(t.get("term", "")).strip().lower() for t in queue}

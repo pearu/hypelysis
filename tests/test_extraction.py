@@ -84,6 +84,7 @@ class TestBatches(Extraction):
 
     def test_a_stricter_stop_keeps_drawing_while_anything_is_new(self):
         self.st.cfg["extraction_stop"] = 0
+        self.st.cfg["extraction_batches"] = 4      # past the two-batch default
         self.extractors(["a", "b"], ["c"], [], ["d"])
         orchestrate.phase_extract(self.st)
         batches = json.load(open(self.st.state_p))["extraction_batches"]
@@ -224,3 +225,64 @@ class TestUntil(unittest.TestCase):
     def test_zero_is_a_real_limit_not_an_absent_one(self):
         args = cli.build_parser().parse_args([self.study, "run", "--until", "0"])
         self.assertEqual(cli.overrides_from(args)["until"], 0)
+
+
+class TestTheAskShapesTheAnswer(Extraction):
+    """Asked what a list misses, a worker answers whether or not anything is."""
+
+    def test_a_conditioned_batch_may_answer_that_nothing_is_missing(self):
+        self.extractors(["a", "b"], [])
+        orchestrate.phase_extract(self.st)
+        conditioned = self.prompts[3]
+        self.assertIn("An empty list is the expected answer", conditioned)
+        self.assertIn("legitimate result", conditioned)
+        self.assertIn("padding it with words the document merely contains", conditioned)
+
+    def test_an_addition_must_say_what_the_document_does_with_it(self):
+        self.extractors(["a"], ["b"], [])
+        orchestrate.phase_extract(self.st)
+        self.assertIn("the claim, count, or mechanism that turns on the term",
+                      self.prompts[3])
+
+    def test_the_extractor_is_not_taught_to_call_its_silence_a_finding(self):
+        """'Finding' is this method's word for something the document is guilty
+        of; an empty draw is not one."""
+        self.assertNotIn("finding", orchestrate.CONDITIONED_BATCH.lower())
+
+    def test_two_batches_by_default(self):
+        st = orchestrate.Study(self.study)
+        self.assertEqual(st.cfg.get("extraction_batches", 2), 2)
+        self.extractors(["a"], ["b"], ["c"], ["d"])
+        orchestrate.phase_extract(self.st)
+        self.assertEqual(sorted(self.raw()), ["a", "b"])
+
+
+class TestAFailedMergerIsNotAMalformedOne(Extraction):
+    def test_a_failed_call_says_the_draws_are_saved(self):
+        """The three staged runs died here on a usage limit, and the run
+        reported a KeyError. A failed call is not a bad answer."""
+        self.extractors(["a", "b"], [],
+                        merger={"verdict": "no", "worker_error": True,
+                                "objections": ["WORKER ERROR: claude-cli failed (1)"]})
+        with self.assertRaises(SystemExit) as caught:
+            orchestrate.phase_extract(self.st)
+        message = str(caught.exception.code)
+        self.assertIn("the merger call failed", message)
+        self.assertIn("re-running costs only the merge", message)
+        self.assertIn("claude-cli failed", message)
+
+    def test_the_draws_survive_a_failed_merge(self):
+        self.extractors(["a", "b"], [],
+                        merger={"worker_error": True, "objections": ["boom"]})
+        with self.assertRaises(SystemExit):
+            orchestrate.phase_extract(self.st)
+        self.assertEqual(sorted(self.raw()), ["a", "b"])
+        self.assertTrue(json.load(open(self.st.state_p))["extraction_batches"])
+
+    def test_a_real_answer_without_a_queue_is_quoted_back(self):
+        self.extractors(["a"], [], merger={"terms": ["a"], "note": "wrong shape"})
+        with self.assertRaises(SystemExit) as caught:
+            orchestrate.phase_extract(self.st)
+        message = str(caught.exception.code)
+        self.assertIn("answered without a queue", message)
+        self.assertIn("wrong shape", message)
