@@ -109,7 +109,9 @@ class TestKeepGoing(Adjudication):
         out = orchestrate.adjudicate(self.st, "widget", ESCALATION)
         self.assertIn("MACHINE-SELECTED WITHOUT OWNER APPROVAL", out)
         self.assertIn("one attribute", out)
-        self.assertIn("Open clause", out)      # the entry must disclose it
+        # the entry must disclose it, in the exact words the run then verifies
+        self.assertIn("Open field", out)
+        self.assertIn(orchestrate.DISCLOSURE_MARKER, out)
         self.assertEqual(self.choices()[0]["mode"], "machine-selected")
 
     def test_it_picks_among_survivors_only(self):
