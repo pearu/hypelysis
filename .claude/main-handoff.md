@@ -95,13 +95,11 @@ accepted:
 
 ## Open items, in priority order
 
-1. Review/merge localLLM's disclosure-gate + chair-amended work when it posts
-   ready (msg 15 spec; branch `pearu/disclosure-check`).
-2. localLLM's local-reader study continues under its own mandate; the reader
+1. localLLM's local-reader study continues under its own mandate; the reader
    comparison needs a definition of "as good" — owner has the question.
-3. Lane 2 of meridian5* remains unrun; the bench scope was lane 1. Owner
+2. Lane 2 of meridian5* remains unrun; the bench scope was lane 1. Owner
    decides if lane-2 comparison is wanted.
-4. `hypelysis-2b [fe5676]`: an agent-registry entry never explained; the
+3. `hypelysis-2b [fe5676]`: an agent-registry entry never explained; the
    stranger-detector is `.claude/claude-git status` showing an id that is
    neither yours nor 9244e41c.
 
