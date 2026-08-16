@@ -34,6 +34,7 @@ src/hypelysis/ the automated method as an installable package: a checked-run
 pipeline/      calibration fixtures and the bench drivers that measure the
                method's own economics — see pipeline/PLAN.md
 studies/       one directory per document studied
+research/      dated reviews and analyses of the project itself
 ```
 
 ## The automated method
@@ -126,6 +127,26 @@ hypelysis ./replayed run
 | study | subject | state |
 | :--- | :--- | :--- |
 | [inthub-whitepaper](studies/inthub-whitepaper/) | *The Distributed AI Economy* (OpenTeams, Rev 9) | complete: 2 ledgers, 41 entries, translation, 8 testable claims |
+
+## Research notes
+
+Dated reviews and analyses of the project itself, under `research/<date>/`
+(each as `.md` and `.pdf`):
+
+- [Project review](research/2026-08-16/project-review.md) — the project from
+  its start: the manual study, the method's codification, the automated
+  pipeline and its calibration, the decided benches, main results, concerns,
+  and open questions.
+- [The pipeline vs the whitepaper's concepts](research/2026-08-16/pipeline-vs-whitepaper-concepts.md) —
+  the pipeline read as a worked exercise of the studied paper's Cogs, Frames,
+  Guards, Gates, Tracks, and Ops, with measured findings per concept — most
+  of them about the three concepts the paper's author flagged as most open
+  to debate and that have no other implementation.
+- [Model-role benchmark review](research/2026-08-16/model-role-bench-review.md) —
+  can a cheaper model take a pipeline role: a sha-verified replay harness;
+  haiku fails the reader role structurally (an always-flag instrument);
+  and a per-call reproducibility floor (51–67% self-agreement, preliminary)
+  under every such comparison.
 
 ## Quickstart
 
