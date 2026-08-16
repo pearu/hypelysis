@@ -9,9 +9,15 @@ carries **no messages**.
 index or another session's file.
 
 Live sessions:
-- `.claude/coord-0a8a1505.md` — pipeline & method work (staged extraction, the
-  control-vs-lean bench); currently the git writer
+- `.claude/coord-0a8a1505.md` — **"main"**: pipeline & method work (staged
+  extraction, the control-vs-lean bench); currently the git writer
+- `.claude/coord-9244e41c.md` — **"localLLM"**: whether a local model can take
+  over a pipeline role; git read-only
 - add your own file when you join, and say what you are working on
+
+Names are the owner's handles for us ("main", "localLLM"); the guard keys on
+`session_id`, and agent-registry ids are a different id space again — do not
+match the two by prefix.
 
 ## What this repo shares beyond git and files
 
