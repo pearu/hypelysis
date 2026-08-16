@@ -10,7 +10,7 @@ import shutil
 import tempfile
 import unittest
 
-from hypelysis import cli, orchestrate, resources
+from hypelysis import cli, orchestrate, providers, resources
 
 
 class Study(unittest.TestCase):
@@ -217,13 +217,117 @@ class TestWhatTheReviewersJudged(unittest.TestCase):
             self.PROP, {"payload": self.PROP["payload"]})
         self.assertIsNone(reviewed)
 
-    def test_the_reviewed_draft_reconstructs_the_prompt_the_readers_saw(self):
-        """The point of keeping it: hashing the reviewed draft reproduces the
-        digest recorded for the reader calls of that attempt."""
-        from hypelysis import providers, resources
-        _, reviewed = orchestrate.chair_amendment(
-            self.PROP, {"payload": "### widget\nKind: base\nStatement: amended.\n"})
-        system = resources.role("reader").replace(
-            "{profile}", "a mathematician who expects statements to be precise")
-        recorded = providers.prompt_sha(system, f"ENTRY:\n{self.PROP['payload']}")
-        self.assertEqual(providers.prompt_sha(system, f"ENTRY:\n{reviewed}"), recorded)
+
+class TestReconstructingWhatTheReadersRead(unittest.TestCase):
+    """The point of keeping the reviewed draft: a finished study can say what
+    its readers actually read.
+
+    This drives the real accept path and checks the reconstruction against the
+    digest **the run recorded in its own log**. Nothing here recomputes the
+    digest it compares against — a test that hashes one string against itself
+    passes whether or not the feature exists, which is how the first version of
+    this test got through review.
+    """
+
+    PROPOSED = ("### widget\nKind: base\n"
+                "Statement: A widget is a part that turns.\n"
+                "Because: the document treats it as primitive.\n")
+    AMENDED = ("### widget\nKind: base\n"
+               "Statement: A widget is a part that turns under load.\n"
+               "Because: the document treats it as primitive.\n")
+
+    class Scripted:
+        """One worker per role, answering well enough to reach the chair.
+
+        `minimality` objects so that `bad` is non-empty — with every check
+        clean the round accepts before a chair is ever called, and an
+        amendment could not arise.
+        """
+
+        def __init__(self, role, proposed, amended):
+            self.role = role.split(":")[0]
+            self.proposed, self.amended = proposed, amended
+
+        def spec(self):
+            return {"provider": "scripted", "model": "scripted"}
+
+        def complete(self, system, user, resume=None):
+            if self.role == "proposer":
+                out = {"move": "entry", "payload": self.proposed,
+                       "reasoning": "the document uses it as a primitive"}
+            elif self.role == "reader":
+                out = {"restatement": "a part that turns", "ambiguous": []}
+            elif self.role == "chair":
+                out = {"decision": "accept", "payload": self.amended,
+                       "feedback": "accepted with the load condition made explicit"}
+            elif self.role == "minimality":
+                out = {"verdict": "no", "objections": ["the Because could be tighter"]}
+            else:
+                out = {"verdict": "ok", "objections": []}
+            return json.dumps(out), {"cost_usd": 0.0}
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.study = os.path.join(self.dir, "study")
+        cli.main([self.study, "init", os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "fixtures", "sprocket.md")])
+        st = orchestrate.Study(self.study)
+        st.provider = lambda role: self.Scripted(role, self.PROPOSED, self.AMENDED)
+        st.state["queue_lane1"] = ["widget"]
+        orchestrate.phase_foundation(st, "lane1")
+        self.st = st
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def log(self, name):
+        p = os.path.join(self.study, "log", name)
+        return [json.loads(l) for l in open(p) if l.strip()] if os.path.exists(p) else []
+
+    def accepted(self):
+        return [d for d in self.log("decisions.jsonl") if d["decision"] == "accept"][0]
+
+    def recorded_reader_digests(self):
+        """What the run logged for each reader call, straight from rounds.jsonl."""
+        return {r["role"]: r["prompt_sha"] for r in self.log("rounds.jsonl")
+                if r.get("role", "").startswith("reader:")}
+
+    def test_the_round_was_accepted_over_an_amendment(self):
+        """The fixture only means something if the chair really did amend."""
+        acc = self.accepted()
+        self.assertEqual(acc["proposal"]["payload"], self.AMENDED)
+        self.assertNotEqual(self.PROPOSED, self.AMENDED)
+
+    def test_the_log_keeps_the_draft_the_readers_judged(self):
+        self.assertEqual(self.accepted()["reviewed_payload"], self.PROPOSED)
+
+    def test_the_amendment_still_governs_the_foundation(self):
+        """Keeping the reviewed draft must not cost the chair its amendment."""
+        fnd = open(os.path.join(self.study, "foundation.md")).read()
+        self.assertIn("under load", fnd)
+
+    def test_the_reviewed_draft_reproduces_the_recorded_reader_digests(self):
+        """Every reader call the run logged is reconstructible from the log
+        alone: same role prompt, same profile, same ENTRY block."""
+        reviewed = self.accepted()["reviewed_payload"]
+        digests = self.recorded_reader_digests()
+        self.assertEqual(len(digests), len(orchestrate.READER_PROFILES))
+        for i, profile in enumerate(orchestrate.READER_PROFILES):
+            system = self.st.role("reader", profile=profile)
+            rebuilt = providers.prompt_sha(system, f"ENTRY:\n{reviewed}")
+            self.assertEqual(rebuilt, digests[f"reader:{i}"],
+                             f"reader:{i} is not reconstructible from the log")
+
+    def test_the_approved_entry_does_not_reproduce_them(self):
+        """The negative half, and the half that has teeth: reconstructing from
+        the payload the chair approved must MISS every recorded digest. Without
+        it, a prompt_sha that ignored its arguments would satisfy the positive
+        test — which is exactly the hole in the version this replaces."""
+        approved = self.accepted()["proposal"]["payload"]
+        digests = self.recorded_reader_digests()
+        for i, profile in enumerate(orchestrate.READER_PROFILES):
+            system = self.st.role("reader", profile=profile)
+            rebuilt = providers.prompt_sha(system, f"ENTRY:\n{approved}")
+            self.assertNotEqual(rebuilt, digests[f"reader:{i}"],
+                                f"reader:{i} matched the amended text — the digest "
+                                "is not discriminating between the two drafts")
