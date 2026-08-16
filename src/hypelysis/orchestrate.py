@@ -35,6 +35,10 @@ READER_PROFILES = ["a careful reader whose first language is not English",
                    "a software engineer who will implement what the text describes",
                    "a mathematician who expects statements to be precise"]
 MILESTONES = ["extraction", "foundation-lane1", "foundation-lane2", "report"]
+# A run told to keep going may settle a reading no owner chose. The entry that
+# settles it must say so, and saying so cannot be left to a worker's memory:
+# this exact clause is what the resolution demands and what the run verifies.
+DISCLOSURE_MARKER = "run-selected reading, awaiting owner confirmation"
 # Asked what a list misses, a worker answers — whether or not anything is
 # missing. Measured: batches conditioned on a longer list returned MORE terms,
 # not fewer, until they were naming every noun in the document. So the ask must
@@ -693,6 +697,10 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
 
     bad = [k for k, v in verdicts.items() if v.get("verdict") != "ok"]
     if not bad:
+        undisclosed = disclosure_gate(st, term, prop)
+        if undisclosed:
+            return {"decision": "retry", "failed": ["disclosure-gate"], "proposal": prop,
+                    "verdicts": dict(verdicts, **{"disclosure-gate": undisclosed})}
         return {"decision": "accept", "failed": [], "proposal": prop, "verdicts": verdicts}
     if "rules" in bad and not promoted:   # mechanical: no chair can overrule it
         return {"decision": "retry", "failed": bad, "proposal": prop, "verdicts": verdicts}
@@ -732,6 +740,20 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
                 "error": str(chair)[:300]}}
     if chair["decision"] == "accept":
         prop, reviewed = chair_amendment(prop, chair)
+        # after the amendment, never before: the chair may amend Open, and an
+        # amendment that adds the marker discloses the choice just as well as a
+        # proposer that remembered it. What must carry the marker is the text
+        # that lands in the foundation.
+        # a chair that amended a disclosure onto the entry has made the choice
+        # it is disclosing; recording it first is what keeps the gate below
+        # from refusing the chair's own candour and blaming the proposer for it
+        record_chair_choice(st, term, prop, reviewed)
+        undisclosed = disclosure_gate(st, term, prop)
+        if undisclosed:
+            return {"decision": "retry", "failed": ["disclosure-gate"], "proposal": prop,
+                    "verdicts": dict(verdicts, **{"disclosure-gate": undisclosed}),
+                    "chair": chair,
+                    **({"reviewed_payload": reviewed} if reviewed else {})}
         for t in (chair.get("revision_triggers") or []):
             with open(os.path.join(st.out, "revision-backlog.md"), "a") as f:
                 f.write(f"- **{term}** — {str(t)[:400]}\n")
@@ -1016,6 +1038,117 @@ def render_verdicts(verdicts: dict, limit: int = 20000) -> str:
     return out
 
 
+def entry_block(payload: str, name: str):
+    """One named entry's body out of a payload holding one or many."""
+    if not isinstance(payload, str) or not name:
+        return None
+    m = re.search(rf"^### {re.escape(name)}\s*\n(.*?)(?=\n### |\Z)",
+                  payload, re.S | re.M | re.I)
+    return m.group(1) if m else None
+
+
+def open_clauses(block: str) -> list:
+    """The Open field's clauses. Read only Open — a disclosure parked in Note
+    or Finding is commentary, and the whole point is that it binds."""
+    if not isinstance(block, str):
+        return []
+    out = []
+    for m in re.finditer(r"^Open: ?(.*(?:\n(?![A-Z#]).*)*)", block, re.M):
+        out += [c.strip() for c in m.group(1).split(";") if c.strip()]
+    return out
+
+
+def settling_entry(prop: dict, term: str):
+    """The entry whose Open field carries this term's disclosure, and its name.
+
+    An alias settles its term by amending the TARGET, so the target is where
+    the disclosure has to live."""
+    payload = prop.get("payload")
+    if not isinstance(payload, str):
+        return None, term
+    where = str(prop.get("target") or "") if prop.get("move") == "alias" else term
+    block = entry_block(payload, where)
+    if block is None:
+        block = payload if prop.get("move") != "alias" else ""
+    return block, where
+
+
+def record_chair_choice(st: Study, term: str, prop: dict, reviewed):
+    """A chair that amends a reading onto its own authority has made an
+    owner-level choice, and until now the run kept no record of it.
+
+    Measured across two completed arms: of nine entries claiming a run-selected
+    reading with no backing record, six were written by the CHAIR on amendment,
+    not by the proposer. Those are not forged disclosures — they are true ones
+    for a choice nothing recorded. Recording them is what lets the gate refuse
+    an unbacked claim without refusing the chair's own candour."""
+    if not isinstance(reviewed, str):
+        return
+    block, _ = settling_entry(prop, term)
+    added = [c for c in open_clauses(block) if DISCLOSURE_MARKER in c]
+    if not added:
+        return
+    was = entry_block(reviewed, term) or reviewed
+    if any(DISCLOSURE_MARKER in c for c in open_clauses(was)):
+        return                                   # the proposer had already said it
+    prior = attempt_count(st, term)
+    st.state.setdefault("machine_choices", []).append(
+        {"term": term, "mode": "chair-amended", "chosen": added[0][:400],
+         "why": "the chair amended the reading on its own authority while accepting",
+         "attempt": prior})
+    save(st.state_p, st.state)
+
+
+def attempt_count(st: Study, term: str) -> int:
+    p = os.path.join(st.out, "log", "decisions.jsonl")
+    if not os.path.exists(p):
+        return 0
+    n = 0
+    for line in open(p):
+        if line.strip() and json.loads(line).get("term") == term:
+            n += 1
+    return n
+
+
+def disclosure_gate(st: Study, term: str, prop: dict):
+    """Hold the entry's disclosure and the run's record to each other.
+
+    Two failures, one invariant. A choice the run made for the owner that the
+    entry does not admit hides it. A claim of a run-selected reading that no
+    record backs launders an ordinary reading as a disclosed one — measured at
+    nine such claims across two completed arms, against zero omissions.
+
+    Adjudicated choices neither require the marker nor forbid it: every rival
+    reading was refuted with grounds, so there is no owner debt to declare, but
+    an entry that mentions it is not lying either.
+
+    Returns a verdict dict to fail the round with, or None when clean."""
+    records = [m for m in (st.state.get("machine_choices") or [])
+               if m.get("term") == term]
+    owes = [m for m in records
+            if m.get("mode") in ("machine-selected", "chair-amended")]
+    block, where = settling_entry(prop, term)
+    if block is None:
+        return None
+    disclosed = any(DISCLOSURE_MARKER in c for c in open_clauses(block))
+    if owes and not disclosed:
+        return {"verdict": "no", "objections": [
+            f"disclosure refused mechanically: the reading for '{term}' was settled "
+            f"by the run, not by the owner, so the entry that settles it must say so. "
+            f"Add to the Open field of '{where}', verbatim: "
+            f"\"{DISCLOSURE_MARKER}\" (further context may follow it). It must be in "
+            f"Open — a Note or Finding does not bind the reader."]}
+    if disclosed and not records:
+        return {"verdict": "no", "objections": [
+            f"disclosure refused mechanically: the entry for '{where}' claims the "
+            f"reading was selected by the run, but this run made no such choice for "
+            f"'{term}' — nothing in its record adjudicated or selected it. Remove the "
+            f"\"{DISCLOSURE_MARKER}\" clause from Open, or ground the reading in the "
+            f"document. A disclosure of a choice that was never made is not candour; "
+            f"it excuses an ordinary reading from having to be argued."]}
+    return None
+
+
 def alias_payload(foundation: str, target: str, note: str, finding: str = ""):
     """The revision an `alias` move stands for, built by code, not drafted.
 
@@ -1203,9 +1336,11 @@ def adjudicate(st: Study, term: str, r: dict):
                 f"the document): {opts[pick]}\n\nOptions tested:\n{tested}")
     return (f"MACHINE-SELECTED WITHOUT OWNER APPROVAL (the run was told to keep going): "
             f"{opts[pick]}\nWhy: {why}\n\nOptions tested:\n{tested}\n\n"
-            f"Because no owner chose this, the entry must carry an Open clause saying "
-            f"that this reading was selected by the run and awaits the owner's "
-            f"confirmation." + DECISION_BINDS_THE_READING)
+            f"Because no owner chose this, the entry that settles this term MUST carry "
+            f"in its Open field, verbatim, the clause: \"{DISCLOSURE_MARKER}\" — further "
+            f"context may follow it, but those words must appear, and in Open rather "
+            f"than Note or Finding. The run verifies this mechanically and will refuse "
+            f"the entry without it." + DECISION_BINDS_THE_READING)
 
 
 def record_escalation(st: Study, term, last):
