@@ -22,7 +22,7 @@ import difflib
 import hashlib
 from . import providers
 from . import resources
-from .check import check_text
+from .check import check_text, FIELDS
 from concurrent.futures import ThreadPoolExecutor
 import threading
 _loglock = threading.Lock()
@@ -573,7 +573,8 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
         st.state.setdefault("proposer_sessions", {})[term] = \
             st.last_meta["session_id"]
         save(st.state_p, st.state)
-    if prop.get("move") not in ("entry", "revision", "reorder", "defer", "prerequisites"):
+    if prop.get("move") not in ("entry", "revision", "reorder", "defer",
+                                "prerequisites", "alias"):
         return {"decision": "retry", "failed": ["proposer"], "proposal": prop,
                 "verdicts": {"proposer": {"verdict": "no", "objections": [
                     "proposer reply unusable (worker error or off-schema); try again"]}}}
@@ -595,6 +596,34 @@ def entry_round(st: Study, term: str, feedback: str) -> dict:
             return {"decision": "retry", "failed": ["skeptic"], "proposal": prop,
                     "verdicts": {"skeptic": sk}}
         return {"decision": "defer", "proposal": prop, "verdicts": {"skeptic": sk}}
+
+    if prop["move"] == "alias":
+        # Mechanical first, like the defer-gate: an alias onto an entry that
+        # does not exist, or one recording nothing, is refused before a single
+        # check is spent. What survives the gate is built here rather than
+        # drafted — the proposer names a target and a sentence, code produces
+        # the complete new foundation — and from here it IS a revision: same
+        # rules check, same reviewers, same chair, same budget, same rule-5
+        # obligation. Building it also sidesteps the failure mode revision
+        # moves have on their own, where a proposer hand-copies the whole
+        # foundation and loses an entry in the transcription.
+        fnd_p = os.path.join(st.out, "foundation.md")
+        current = open(fnd_p).read() if os.path.exists(fnd_p) else ""
+        target = str(prop.get("target") or "").strip()
+        built = alias_payload(current, target, str(prop.get("note") or ""),
+                              str(prop.get("finding") or ""))
+        if built is None:
+            have = re.findall(r"^### (.+)$", current, re.M)
+            why = (f"'{target}' is not an entry in the foundation"
+                   if target else "no target named")
+            if target and any(target == h for h in have):
+                why = "the note is empty — an alias must record the name it claims is one"
+            return {"decision": "retry", "failed": ["alias-gate"], "proposal": prop,
+                    "verdicts": {"alias-gate": {"verdict": "no", "objections": [
+                        f"alias rejected mechanically: {why}. Entries available: "
+                        f"{', '.join(have[:8]) or '(none)'}. Alias an entry that "
+                        "exists and say what the name records, or propose an entry"]}}}
+        prop = dict(prop, payload=built)
 
     verdicts = {}
     payload = prop["payload"]
@@ -841,7 +870,7 @@ def apply_move(st: Study, prop: dict):
     if prop["move"] == "entry":
         with open(p, "a") as f:
             f.write("\n" + prop["payload"].strip() + "\n")
-    elif prop["move"] in ("revision", "reorder"):
+    elif prop["move"] in ("revision", "reorder", "alias"):
         # the payload is the complete replacement foundation, already validated
         # by rules_check against the whole text
         with open(os.path.join(st.out, "log", "structure-moves.jsonl"), "a") as f:
@@ -987,6 +1016,65 @@ def render_verdicts(verdicts: dict, limit: int = 20000) -> str:
     return out
 
 
+def alias_payload(foundation: str, target: str, note: str, finding: str = ""):
+    """The revision an `alias` move stands for, built by code, not drafted.
+
+    A term whose content an accepted entry already carries has no legal move:
+    an entry of its own duplicates the mechanism and the checks reject it,
+    deferral is barred when other queued terms presuppose it, and the chair
+    cannot amend a Statement into covering it. The term is nonetheless evidence
+    about the document — it is the document's other name for something already
+    founded — so it lands on the entry that already carries it: the name in the
+    target's Note, any finding in its Finding.
+
+    Returns the complete new foundation, or None if there is nothing to record
+    or no such entry to record it on. Everything but the two touched fields is
+    copied unchanged, which is what makes an alias reviewable as the revision
+    it is: the diff IS the claim. It gets no exemption downstream — same rules
+    check, same reviewers, same chair, same rule-5 obligation."""
+    if not target or not (note or "").strip():
+        return None
+    m = re.search(rf"^### {re.escape(target)}\n(.*?)(?=\n### |\Z)",
+                  foundation, re.S | re.M)
+    if not m:
+        return None
+    block = _append_field(m.group(1), "Finding", finding)
+    block = _append_field(block, "Note", note)
+    return foundation[:m.start(1)] + block + foundation[m.end(1):]
+
+
+def _append_field(block: str, field: str, sentence: str) -> str:
+    """Add a sentence to one field of one entry, creating the field in its
+    required position if the entry has none.
+
+    Field order is mechanical (FIELDS), so an alias that appended a Note
+    ahead of a Finding would be rejected by the very checks it has to pass."""
+    sentence = (sentence or "").strip()
+    if not sentence:
+        return block
+    lines = block.split("\n")
+    head = re.compile(r"^(" + "|".join(FIELDS) + r"):")
+    here = [i for i, l in enumerate(lines) if re.match(rf"^{field}:", l)]
+    if here:
+        i = here[0] + 1
+        while i < len(lines) and lines[i].strip() and not head.match(lines[i]):
+            i += 1
+        lines[i - 1] = lines[i - 1].rstrip() + " " + sentence
+        return "\n".join(lines)
+    rank = FIELDS.index(field)
+    at = len(lines)
+    for i, l in enumerate(lines):
+        m = head.match(l)
+        if m and FIELDS.index(m.group(1)) > rank:
+            at = i
+            break
+    else:
+        while at > 0 and not lines[at - 1].strip():
+            at -= 1
+    lines.insert(at, f"{field}: {sentence}")
+    return "\n".join(lines)
+
+
 def chair_amendment(prop: dict, chair: dict):
     """Fold the chair's amendment into the entry, keeping what was reviewed.
 
@@ -1016,7 +1104,7 @@ def rejected_draft(st: Study, r: dict) -> str:
         return ""
     if prop.get("move") == "entry":
         return f"YOUR PREVIOUS PROPOSAL, WHICH WAS REJECTED:\n{payload}\n\n"
-    if prop.get("move") not in ("revision", "reorder"):
+    if prop.get("move") not in ("revision", "reorder", "alias"):
         return ""
     fnd_p = os.path.join(st.out, "foundation.md")
     current = open(fnd_p).read() if os.path.exists(fnd_p) else ""

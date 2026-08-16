@@ -13,6 +13,11 @@ objection's severity "escalate": that choice belongs to the study owner, not to 
 proposer. If the proposal
 carries a Notation, verify it says the same thing as the Statement — a notation that
 typechecks differently, drops a condition, or adds one is a defect.
+An alias deserves scrutiny of what the NAME asserts beyond the target it is being folded into: a
+name can carry a guarantee ("never stale") where the target's Statement carries only a mechanism
+("rebuilt as entries land"), and flattening that gap loses exactly what this method exists to
+find. If the name promises anything the target does not deliver, that is blocking and the term
+needs its own entry.
 Report only defects you can
 state concretely — an objection must name the failing case. Grade each objection: "blocking"
 if the failing case makes the statement wrong or unusable; "advisory" if worth recording in

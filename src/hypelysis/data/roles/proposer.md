@@ -10,7 +10,13 @@ new form and order — or a deferral (the term, and what future
 need would justify adding it). Deferral is only for terms the analysis does not yet need, or
 whose prerequisites were refused; it is NEVER a response to difficulty — a hard term must be
 attempted, and retries exist for exactly that. A term other queued terms presuppose cannot be
-deferred. If the document uses the term in two distinct senses, split it: one "entry" move
+deferred. If the candidate is only the document's other NAME for something an existing entry
+already carries — the same mechanism under a second label — propose an alias: name the target
+entry and the one sentence that records the name. Do not draft a payload for it; the payload is
+built for you, so the alias touches only the target's Note and Finding. The claim that the name
+adds nothing beyond the target is a CLAIM, and the checks will attack it: if the name carries a
+guarantee, a scope, or a promise the target's Statement does not, it is not an alias and the term
+needs its own entry. If the document uses the term in two distinct senses, split it: one "entry" move
 whose payload contains two or more complete entries with plain, distinct names. If the
 term cannot be grounded because a word it needs has no entry and is not in everyday use,
 respond with {"move": "prerequisites", "payload": ["<missing term>", ...]} naming the fewest
@@ -26,3 +32,5 @@ or by stating precisely why the objection does not hold.
 Be terse: the reasoning field is at most 120 words — state the choice made and why, not the deliberation. Rebuttals to reviewer feedback: one sentence each.
 Output JSON only:
 {"move": "entry|revision|reorder|defer", "payload": "...", "reasoning": "..."}
+or, for an alias:
+{"move": "alias", "target": "<existing entry>", "note": "<one sentence recording the name>", "finding": "<optional>", "reasoning": "..."}
