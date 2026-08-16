@@ -13,10 +13,12 @@ Writes <study-dir>/RUN-REPORT.md and returns the terminal rendering.
 """
 import json
 import os
+import re
 import sys
 import textwrap
 from collections import defaultdict
 
+from . import orchestrate
 from . import provenance
 
 TOKEN_KEYS = ("input_tokens", "cache_read_tokens", "cache_write_tokens", "output_tokens")
@@ -79,6 +81,57 @@ def gather(out: str) -> dict:
             "timing": timing, "wall": wall,
             "code": latest, "settings": (latest or {}).get("settings") or {},
             "versions": {provenance.describe(r) for r in runs}}
+
+
+# Studies that ran before the marker was canonical disclosed in prose. Reading
+# only for the exact marker would report those as hiding a choice they in fact
+# declared — a compliance failure invented by the instrument. The gate that
+# binds new runs stays exact; this recogniser exists only to read old ones
+# fairly, and it is deliberately generous: a false "disclosed" here costs less
+# than a false accusation.
+LEGACY_DISCLOSURE = re.compile(
+    r"selected by the run|chosen by the run|run-selected|without owner (confirmation|approval)"
+    r"|awaits? (the )?owner|awaiting owner|owner sign-off|awaits sign-off", re.I)
+
+
+def unbacked(data: dict) -> list:
+    """Entries claiming a run-selected reading that the run never selected.
+
+    The direction nobody specced and the one the evidence found: across two
+    completed arms, nine entries claimed a run-selection with no backing
+    record, against zero omissions. A claim like that excuses an ordinary
+    reading from having to be argued, which is worse than saying nothing."""
+    p = os.path.join(data["study"], "foundation.md")
+    fnd = open(p).read() if os.path.exists(p) else ""
+    have = {m["term"].strip().lower() for m in data["machine_choices"]}
+    out = []
+    for m in re.finditer(r"^### (.+?)\s*\n(.*?)(?=\n### |\Z)", fnd, re.S | re.M):
+        name = m.group(1).strip()
+        clauses = orchestrate.open_clauses(m.group(2))
+        claims = any(orchestrate.DISCLOSURE_MARKER in c or LEGACY_DISCLOSURE.search(c)
+                     for c in clauses)
+        if claims and name.strip().lower() not in have:
+            out.append(name)
+    return out
+
+
+def undisclosed(data: dict) -> list:
+    """Terms the run chose a reading for whose entry does not admit it.
+
+    Reported, never healed. A finished study's record is what it is, and
+    rewriting an old foundation to add a disclosure would be the study
+    claiming a candour it did not have at the time."""
+    p = os.path.join(data["study"], "foundation.md")
+    fnd = open(p).read() if os.path.exists(p) else ""
+    out = []
+    for m in data["machine_choices"]:
+        if m.get("mode") != "machine-selected":
+            continue
+        clauses = orchestrate.open_clauses(orchestrate.entry_block(fnd, m["term"]))
+        if not any(orchestrate.DISCLOSURE_MARKER in c or LEGACY_DISCLOSURE.search(c)
+                   for c in clauses):
+            out.append(m["term"])
+    return out
 
 
 def busy_wall(calls: list) -> float:
@@ -262,6 +315,18 @@ def text(data: dict) -> str:
                   "run itself,", "         not by the study owner (--keep-going); see "
                   "adjudications.md:"]
         lines += [f"           {m['term']}: {m['chosen'][:60]}" for m in unowned]
+        hidden = undisclosed(data)
+        if hidden:
+            lines += ["", f"         of those, {len(hidden)} carry NO disclosure in the "
+                      "foundation entry that settled them:",
+                      "         " + ", ".join(hidden),
+                      "         (the entry should carry, in Open: "
+                      f"\"{orchestrate.DISCLOSURE_MARKER}\")"]
+    forged = unbacked(data)
+    if forged:
+        lines += ["", f"WARNING: {len(forged)} entr(y/ies) claim a run-selected reading "
+                  "that this run", "         never selected — no record of the choice "
+                  "exists:", "         " + ", ".join(forged)]
     if data["outcome"]:
         tally = defaultdict(int)
         for v in data["outcome"].values():
@@ -296,6 +361,19 @@ def markdown(data: dict) -> str:
                   "the run, not by its owner** (`--keep-going`); see adjudications.md.", ""]
         for m in unowned:
             lines.append(f"- {m['term']}: {m['chosen']}")
+        hidden = undisclosed(data)
+        if hidden:
+            lines += ["", f"**{len(hidden)} of those are undisclosed**: the foundation "
+                      "entry that settled the term carries no "
+                      f"`{orchestrate.DISCLOSURE_MARKER}` clause in its `Open` field, so "
+                      "a reader of the foundation alone cannot tell the choice was the "
+                      "run's — " + ", ".join(hidden) + "."]
+    forged = unbacked(data)
+    if forged:
+        lines += ["", f"**{len(forged)} entr(y/ies) claim a run-selected reading this run "
+                  "never made** — no adjudication or selection record backs them, so the "
+                  "clause excuses a reading from having been argued: " + ", ".join(forged)
+                  + "."]
     lines += ["", "## Worker calls", "",
               "| role | calls | total s | mean s | max s | out tok | cache-w | cache-r | cost $ |",
               "|---|---|---|---|---|---|---|---|---|"]
