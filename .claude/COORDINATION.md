@@ -34,8 +34,12 @@ does **not** see, and which have actually broken things here:
    points at this tree, and every `hypelysis run` invocation loads the code as it
    is *at that moment*. Editing `src/hypelysis/` while another session's study is
    running changes that study's code mid-experiment and splits its provenance
-   stamp. **While a run is live, do package edits in a git worktree** (e.g.
-   `git worktree add ../hypelysis-<topic> -b pearu/<topic>`) and merge after.
+   stamp. **While a run is live, do package edits in a git worktree** and merge
+   after. Creating a worktree writes a branch ref, which the guard rightly
+   treats as a git mutation — so a non-owner session cannot create its own:
+   ask the git writer in your coord file (it costs one message), then write
+   into the worktree it makes for you. Edits there are yours; commits are the
+   writer's, crediting you in the message.
 3. **`pipeline/runs/`** — gitignored run evidence, invisible to the git guard.
    Use run directory names nobody else is using; never write into another
    session's study directory.
